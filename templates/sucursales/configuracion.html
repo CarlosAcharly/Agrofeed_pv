@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Configuración - {{ sucursal.nombre }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'sucursales_lista' %}">Sucursales</a></li>
+<li class="breadcrumb-item"><a href="{% url 'sucursales_detalle' sucursal.id %}">{{ sucursal.nombre }}</a></li>
+<li class="breadcrumb-item active">Configuración</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Configuración de Sucursal</h4>
+                    <span class="badge bg-primary">{{ sucursal.codigo }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Configuración de Inventario -->
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Configuración de Inventario</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="{{ form.stock_minimo_global.id_for_label }}" class="form-label">
+                                            Stock Mínimo Global
+                                        </label>
+                                        {{ form.stock_minimo_global }}
+                                        <small class="text-muted">Cantidad mínima de stock para alertas</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.stock_maximo_global.id_for_label }}" class="form-label">
+                                            Stock Máximo Global
+                                        </label>
+                                        {{ form.stock_maximo_global }}
+                                        <small class="text-muted">Cantidad máxima recomendada de stock</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Configuración de Seguridad -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Configuración de Seguridad</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="{{ form.max_intentos_login.id_for_label }}" class="form-label">
+                                            Máximo de Intentos de Login
+                                        </label>
+                                        {{ form.max_intentos_login }}
+                                        <small class="text-muted">Número de intentos fallidos antes de bloquear</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.tiempo_bloqueo.id_for_label }}" class="form-label">
+                                            Tiempo de Bloqueo (minutos)
+                                        </label>
+                                        {{ form.tiempo_bloqueo }}
+                                        <small class="text-muted">Tiempo que permanece bloqueado el usuario</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Configuración de Ventas -->
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Configuración de Ventas</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="{{ form.iva_porcentaje.id_for_label }}" class="form-label">
+                                            Porcentaje de IVA (%)
+                                        </label>
+                                        {{ form.iva_porcentaje }}
+                                        <small class="text-muted">Porcentaje de IVA aplicado a las ventas</small>
+                                    </div>
+                                    
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.redondeo_ventas }}
+                                        <label class="form-check-label" for="{{ form.redondeo_ventas.id_for_label }}">
+                                            <strong>Redondear Ventas</strong>
+                                        </label>
+                                        <small class="text-muted d-block">Redondear montos al finalizar ventas</small>
+                                    </div>
+                                    
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.mostrar_stock }}
+                                        <label class="form-check-label" for="{{ form.mostrar_stock.id_for_label }}">
+                                            <strong>Mostrar Stock en Ventas</strong>
+                                        </label>
+                                        <small class="text-muted d-block">Mostrar cantidad disponible durante la venta</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Configuración de Reportes -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Configuración de Reportes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.generar_reporte_diario }}
+                                        <label class="form-check-label" for="{{ form.generar_reporte_diario.id_for_label }}">
+                                            <strong>Generar Reporte Diario Automático</strong>
+                                        </label>
+                                        <small class="text-muted d-block">Generar reporte de cierre diario automáticamente</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="{{ form.hora_reporte.id_for_label }}" class="form-label">
+                                            Hora del Reporte Diario
+                                        </label>
+                                        {{ form.hora_reporte }}
+                                        <small class="text-muted">Hora a la que se genera el reporte diario</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'sucursales_detalle' sucursal.id %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar Configuración
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Información de la Configuración -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información de la Configuración</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Sucursal:</strong> {{ sucursal.nombre }} ({{ sucursal.codigo }})
+                        </p>
+                        <p class="mb-2">
+                            <strong>Configuración creada:</strong> 
+                            {% if configuracion %}
+                            {{ configuracion.fecha_actualizacion|date:"d/m/Y H:i" }}
+                            {% else %}
+                            No configurada
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Estado de la sucursal:</strong>
+                            <span class="badge bg-{% if sucursal.activa %}success{% else %}danger{% endif %}">
+                                {% if sucursal.activa %}Activa{% else %}Inactiva{% endif %}
+                            </span>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Capacidades:</strong>
+                            {% if sucursal.permite_ventas %}<span class="badge bg-success me-1">Ventas</span>{% endif %}
+                            {% if sucursal.permite_compras %}<span class="badge bg-success">Compras</span>{% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Nota:</strong> Los cambios en la configuración se aplican inmediatamente 
+                    a todas las operaciones de esta sucursal.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar clases Bootstrap a los campos
+    const formElements = document.querySelectorAll('input, select, textarea');
+    formElements.forEach(element => {
+        if (!element.classList.contains('btn') && element.type !== 'checkbox') {
+            element.classList.add('form-control');
+        }
+    });
+    
+    // Estilo especial para los switches
+    document.querySelectorAll('.form-check-input').forEach(element => {
+        element.classList.add('form-check-input');
+    });
+    
+    // Validar porcentaje de IVA
+    const ivaInput = document.getElementById('{{ form.iva_porcentaje.id_for_label }}');
+    if (ivaInput) {
+        ivaInput.addEventListener('change', function() {
+            const valor = parseFloat(this.value);
+            if (valor < 0 || valor > 100) {
+                this.setCustomValidity('El porcentaje de IVA debe estar entre 0 y 100');
+                this.classList.add('is-invalid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

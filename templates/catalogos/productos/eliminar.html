@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Producto - Catálogos{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_lista' %}">Productos</a></li>
+<li class="breadcrumb-item active">Eliminar Producto</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Eliminar Producto</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            {% if producto.imagen %}
+                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                                 class="rounded me-3" width="80" height="80">
+                            {% else %}
+                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                 style="width: 80px; height: 80px;">
+                                <i class="bi bi-box text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h5 class="card-title">{{ producto.codigo }} - {{ producto.nombre }}</h5>
+                                <p class="card-text mb-0">
+                                    <strong>Categoría:</strong> {{ producto.categoria|default:"-" }}<br>
+                                    <strong>Proveedor:</strong> {{ producto.proveedor|default:"-" }}<br>
+                                    <strong>Estado:</strong> 
+                                    {% if producto.activo %}
+                                    <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <strong>Información importante:</strong><br>
+                    Al eliminar este producto, se eliminarán también:
+                    <ul class="mb-0 mt-2">
+                        <li>Todos los registros de stock por sucursal</li>
+                        <li>Todos los movimientos de inventario asociados</li>
+                        <li>El historial de ventas que contenga este producto</li>
+                    </ul>
+                </div>
+                
+                <p class="text-muted">
+                    ¿Estás absolutamente seguro de que quieres eliminar este producto?
+                    Esta acción afectará reportes históricos y no se puede revertir.
+                </p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'productos_lista' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Eliminar Producto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Unidades de Medida - Catálogos{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_lista' %}">Catálogos</a></li>
+<li class="breadcrumb-item active">Unidades de Medida</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">Unidades de Medida</h2>
+                <p class="text-muted mb-0">Gestiona las unidades para tus productos</p>
+            </div>
+            <a href="{% url 'unidades_crear' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nueva Unidad
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for unidad in unidades %}
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">{{ unidad.nombre }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ unidad.abreviatura }}</h6>
+                        {% if unidad.descripcion %}
+                        <p class="card-text small">{{ unidad.descripcion|truncatechars:80 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group">
+                        <a href="{% url 'unidades_editar' unidad.id %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'unidades_eliminar' unidad.id %}" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <span class="badge bg-info">
+                        {{ unidad.producto_set.count }} productos
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-rulers text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3">No hay unidades de medida</h5>
+                <p class="text-muted">Crea unidades para medir tus productos (kg, litros, piezas, etc.)</p>
+                <a href="{% url 'unidades_crear' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Crear Primera Unidad
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

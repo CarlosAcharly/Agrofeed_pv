@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Inventario - Catálogos{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_lista' %}">Catálogos</a></li>
+<li class="breadcrumb-item"><a href="{% url 'inventario_lista' %}">Inventario</a></li>
+<li class="breadcrumb-item active">Reporte</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">Reporte de Inventario</h2>
+                <p class="text-muted mb-0">Sucursal: {{ sucursal.nombre }}</p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'inventario_lista' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                <a href="#" class="btn btn-success" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Imprimir Reporte
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Generales -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Valor Total</h6>
+                        <h4 class="mb-0">${{ valor_inventario|floatformat:2 }}</h4>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-success rounded-circle">
+                            <i class="bi bi-currency-dollar"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Total Productos</h6>
+                        <h4 class="mb-0">{{ total_productos }}</h4>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-primary rounded-circle">
+                            <i class="bi bi-box-seam"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Bajo Stock</h6>
+                        <h4 class="mb-0">{{ productos_bajo_stock.count }}</h4>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-danger rounded-circle">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Sin Stock</h6>
+                        <h4 class="mb-0">{{ productos_sin_stock }}</h4>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-warning rounded-circle">
+                            <i class="bi bi-slash-circle"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Productos con Bajo Stock -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Productos con Bajo Stock ({{ productos_bajo_stock.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if productos_bajo_stock %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Stock</th>
+                                <th class="text-center">Mínimo</th>
+                                <th class="text-center">Diferencia</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ps in productos_bajo_stock %}
+                            <tr>
+                                <td>
+                                    {{ ps.producto.codigo }}<br>
+                                    <small class="text-muted">{{ ps.producto.nombre|truncatechars:30 }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger">{{ ps.stock }}</span>
+                                </td>
+                                <td class="text-center">{{ ps.stock_minimo }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning">
+                                        -{{ ps.stock_minimo|add:"-1"|floatformat:"0" }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    ${{ ps.producto.costo_promedio|floatformat:2 }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <p class="mt-3 text-success">¡Excelente! No hay productos con stock bajo.</p>
+                </div>
+                {% endif %}
+                
+                {% if productos_bajo_stock %}
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Sugerencia:</strong> Realizar pedido de reabastecimiento para estos productos.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Productos Más Vendidos -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Productos Más Vendidos (Últimos 30 días)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if productos_vendidos %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Producto</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Ingreso Estimado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for producto in productos_vendidos %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    {{ producto.producto__producto__codigo }}<br>
+                                    <small class="text-muted">{{ producto.producto__producto__nombre|truncatechars:30 }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ producto.total_vendido }}</span>
+                                </td>
+                                <td class="text-end">
+                                    {% comment %}
+                                    Aquí podrías calcular el ingreso si tuvieras el precio de venta
+                                    {% endcomment %}
+                                    <span class="text-muted">N/A</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-bar-chart text-muted" style="font-size: 2rem;"></i>
+                    <p class="mt-3 text-muted">No hay datos de ventas disponibles</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen por Categorías -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Resumen General</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información del Inventario</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Fecha del Reporte
+                                <span>{% now "d/m/Y H:i" %}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Sucursal
+                                <span>{{ sucursal.nombre }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total de Productos
+                                <span>{{ total_productos }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Productos Activos
+                                <span class="badge bg-success">100%</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Análisis de Stock</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Valor Total Inventario
+                                <span class="fw-bold">${{ valor_inventario|floatformat:2 }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Productos con Bajo Stock
+                                <span class="badge bg-danger">{{ productos_bajo_stock.count }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Productos sin Stock
+                                <span class="badge bg-warning">{{ productos_sin_stock }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Nivel de Alerta
+                                <span class="badge bg-{% if productos_bajo_stock.count > 5 %}danger{% elif productos_bajo_stock.count > 2 %}warning{% else %}success{% endif %}">
+                                    {% if productos_bajo_stock.count > 5 %}Crítico{% elif productos_bajo_stock.count > 2 %}Moderado{% else %}Normal{% endif %}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Recomendaciones:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Revisar diariamente los productos con bajo stock</li>
+                        <li>Mantener un nivel de seguridad del 20% sobre el stock mínimo</li>
+                        <li>Realizar inventarios físicos periódicos</li>
+                        <li>Optimizar los niveles de stock según temporada</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botones de Acción -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="btn-group">
+                    <a href="{% url 'inventario_lista' %}" class="btn btn-primary">
+                        <i class="bi bi-clipboard-data"></i> Ver Inventario Completo
+                    </a>
+                    <a href="{% url 'inventario_ajuste' %}" class="btn btn-warning">
+                        <i class="bi bi-plus-slash-minus"></i> Realizar Ajustes
+                    </a>
+                    <a href="#" class="btn btn-success" onclick="window.print()">
+                        <i class="bi bi-file-earmark-pdf"></i> Generar PDF
+                    </a>
+                    <a href="#" class="btn btn-info">
+                        <i class="bi bi-download"></i> Exportar Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

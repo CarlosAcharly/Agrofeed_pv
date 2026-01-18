@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        /* Reset y estilos base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-image: url('https://thumbs.dreamstime.com/b/vacas-negras-de-pie-en-un-pasto-embarrado-con-otros-ganados-y-grandes-silos-industriales-al-fondo-representando-la-modernidad-416073338.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        /* Overlay oscuro para mejorar contraste */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        /* Contenedor principal */
+        .glass-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        /* Tarjeta glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 40px 35px;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Efecto de brillo sutil */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3), 
+                transparent);
+        }
+
+        /* Header */
+        .glass-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .glass-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            font-weight: 400;
+        }
+
+        /* Formulario */
+        .glass-form {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Grupos de input */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            display: block;
+            color: white;
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 15px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Inputs */
+        .glass-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Opciones - Recordarme y olvidé contraseña */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            color: white;
+            cursor: pointer;
+        }
+
+        .remember-checkbox {
+            margin-right: 8px;
+            accent-color: white;
+            width: 16px;
+            height: 16px;
+        }
+
+        .forgot-password {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .forgot-password:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        /* Botón */
+        .glass-btn {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 25px;
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Footer / Registro */
+        .glass-footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .register-link {
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 5px;
+            opacity: 0.9;
+        }
+
+        .register-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .glass-card {
+                padding: 30px 25px;
+                border-radius: 18px;
+            }
+            
+            .glass-title {
+                font-size: 28px;
+            }
+            
+            .glass-input {
+                padding: 14px 18px;
+            }
+            
+            .glass-btn {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .glass-card {
+                padding: 25px 20px;
+            }
+        }
+
+        /* Mensajes de error/success */
+        .message {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor principal -->
+    <div class="glass-container">
+        <div class="glass-card">
+            <!-- Header -->
+            <div class="glass-header">
+                <h1 class="glass-title">Inicio de Sesión</h1>
+                <p class="glass-subtitle">Ingresa tu usuario y contraseña</p>
+            </div>
+
+            <!-- Mensajes -->
+            <div id="message" class="message"></div>
+
+            <!-- Formulario -->
+            <form method="post" class="glass-form" id="loginForm">
+                {% csrf_token %}
+                
+                <!-- Campo de email -->
+                <div class="input-group">
+                    <label for="username" class="input-label">Usuario</label>
+                    <input type="text" 
+                           class="glass-input" 
+                           id="username" 
+                           name="username" 
+                           placeholder="Enter your email"
+                           required>
+                </div>
+                
+                <!-- Campo de contraseña -->
+                <div class="input-group">
+                    <label for="password" class="input-label">Contraseña</label>
+                    <input type="password" 
+                           class="glass-input" 
+                           id="password" 
+                           name="password" 
+                           placeholder="Enter your password"
+                           required>
+                </div>
+                
+                <!-- Opciones -->
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" class="remember-checkbox">
+                        Recordar mi contraseña
+                    </label>
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                </div>
+                
+                <!-- Botón de login -->
+                <button type="submit" class="glass-btn">
+                    Iniciar Sesión
+                </button>
+            </form>
+            
+            <!-- Footer / Registro -->
+            <div class="glass-footer">
+                <p>¿No tienes una cuenta? 
+                    <a href="#" class="register-link">Regístrate</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Validación básica del formulario
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            
+            // Validación simple
+            if (!username || !password) {
+                messageDiv.textContent = 'Please fill in all fields';
+                messageDiv.style.display = 'block';
+                messageDiv.style.color = '#ffcccc';
+                messageDiv.style.background = 'rgba(255, 100, 100, 0.2)';
+                messageDiv.style.borderColor = 'rgba(255, 100, 100, 0.3)';
+            } else {
+                // En un caso real, aquí se enviaría el formulario
+                // Por ahora solo mostramos un mensaje
+                messageDiv.textContent = 'Iniciando sesión...';
+                messageDiv.style.display = 'block';
+                messageDiv.style.color = '#ccffcc';
+                messageDiv.style.background = 'rgba(100, 255, 100, 0.2)';
+                messageDiv.style.borderColor = 'rgba(100, 255, 100, 0.3)';
+                
+                // Simular envío del formulario después de 1 segundo
+                setTimeout(() => {
+                    this.submit();
+                }, 1000);
+            }
+            
+            // Ocultar mensaje después de 4 segundos
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 4000);
+        });
+        
+        // Mejorar experiencia de usuario en inputs
+        const inputs = document.querySelectorAll('.glass-input');
+        inputs.forEach(input => {
+            // Añadir efecto de foco suave
+            input.addEventListener('focus', function() {
+                this.style.transform = 'scale(1.01)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.style.transform = 'scale(1)';
+            });
+            
+            // Validación en tiempo real para email
+            if (input.id === 'username') {
+                input.addEventListener('input', function() {
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (this.value && !emailPattern.test(this.value)) {
+                        this.style.borderColor = 'rgba(255, 100, 100, 0.5)';
+                    } else {
+                        this.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

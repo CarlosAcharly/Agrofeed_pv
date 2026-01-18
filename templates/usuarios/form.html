@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card glass-card border-0 shadow-lg">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ titulo }}</h5>
+                            <p class="text-muted mb-0">Complete la información del usuario</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'usuarios_lista' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Por favor corrija los errores a continuación.
+                        </div>
+                        {% endif %}
+
+                        <!-- Información básica -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.username.label }}</label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                <div class="text-danger small">{{ form.username.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.email.label }}</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+
+                        <!-- Rol y Sucursal -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.rol.label }}</label>
+                                {{ form.rol }}
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Superadmin: Acceso completo a todo el sistema<br>
+                                    Admin: Administra su sucursal asignada<br>
+                                    Cajero: Solo puede realizar ventas en su sucursal
+                                </small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.sucursal.label }}</label>
+                                {{ form.sucursal }}
+                                <small class="text-muted">
+                                    <i class="fas fa-store"></i>
+                                    La sucursal determina dónde puede trabajar el usuario
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label">{{ form.password.label }}</label>
+                                {{ form.password }}
+                                <small class="text-muted">{{ form.password.help_text }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Usuario Activo
+                                    </label>
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-user-check"></i>
+                                        Usuarios inactivos no pueden iniciar sesión
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if titulo == 'Crear Usuario' %}Crear{% else %}Actualizar{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rolSelect = document.querySelector('#id_rol');
+    const sucursalSelect = document.querySelector('#id_sucursal');
+    
+    function actualizarSucursalSegunRol() {
+        const rol = rolSelect.value;
+        
+        if (rol === 'superadmin') {
+            // Superadmin puede no tener sucursal o tener cualquier sucursal
+            sucursalSelect.disabled = false;
+        } else if (rol === 'admin' || rol === 'cajero') {
+            // Admin y cajero DEBEN tener sucursal
+            sucursalSelect.disabled = false;
+            sucursalSelect.required = true;
+            
+            // Si no tiene sucursal seleccionada, mostrar alerta
+            if (!sucursalSelect.value) {
+                // Puedes agregar lógica aquí si quieres
+            }
+        }
+    }
+    
+    // Escuchar cambios en el rol
+    if (rolSelect) {
+        rolSelect.addEventListener('change', actualizarSucursalSegunRol);
+        // Inicializar
+        actualizarSucursalSegunRol();
+    }
+    
+    // Validar antes de enviar
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const rol = rolSelect.value;
+        const sucursal = sucursalSelect.value;
+        
+        if ((rol === 'admin' || rol === 'cajero') && !sucursal) {
+            e.preventDefault();
+            alert('Los usuarios Admin y Cajero deben tener una sucursal asignada.');
+            sucursalSelect.focus();
+            return false;
+        }
+    });
+});
+</script>
+
+<style>
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.form-switch .form-check-input {
+    width: 3em;
+    height: 1.5em;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Proveedor - Catálogos{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_lista' %}">Catálogos</a></li>
+<li class="breadcrumb-item"><a href="{% url 'proveedores_lista' %}">Proveedores</a></li>
+<li class="breadcrumb-item active">Eliminar Proveedor</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Eliminar Proveedor</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ proveedor.nombre }}</h5>
+                        <p class="card-text">
+                            <strong>Contacto:</strong> {{ proveedor.contacto|default:"No especificado" }}<br>
+                            <strong>Teléfono:</strong> {{ proveedor.telefono|default:"No especificado" }}<br>
+                            <strong>Email:</strong> {{ proveedor.email|default:"No especificado" }}<br>
+                            <strong>RFC:</strong> {{ proveedor.rfc|default:"No especificado" }}
+                        </p>
+                    </div>
+                </div>
+                
+                <p class="text-muted">
+                    ¿Estás seguro de que quieres eliminar este proveedor? 
+                    Se eliminarán todos los datos asociados.
+                </p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'proveedores_lista' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Eliminar Proveedor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

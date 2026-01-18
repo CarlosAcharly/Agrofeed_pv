@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Clientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Card Principal -->
+            <div class="card glass-card border-0 shadow-lg">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ titulo }}</h5>
+                            <p class="text-muted mb-0">Complete la información del cliente</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'clientes_lista' %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        <!-- Mensajes de error -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Por favor corrija los errores a continuación.
+                        </div>
+                        {% endif %}
+
+                        <!-- Pestañas -->
+                        <ul class="nav nav-tabs mb-4" id="clienteTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#info" type="button" role="tab">
+                                    <i class="fas fa-user me-2"></i>Información Personal
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="direcciones-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#direcciones" type="button" role="tab">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Direcciones
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="descuento-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#descuento" type="button" role="tab">
+                                    <i class="fas fa-percentage me-2"></i>Descuento
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Contenido de pestañas -->
+                        <div class="tab-content" id="clienteTabsContent">
+                            <!-- Pestaña 1: Información Personal -->
+                            <div class="tab-pane fade show active" id="info" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.codigo.label }}</label>
+                                        {{ form.codigo }}
+                                        {% if form.codigo.errors %}
+                                        <div class="text-danger small">{{ form.codigo.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Sucursal Registro</label>
+                                        <input type="text" class="form-control" 
+                                               value="{{ user.sucursal.nombre|default:'-' }}" readonly>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.nombre.label }}</label>
+                                        {{ form.nombre }}
+                                        {% if form.nombre.errors %}
+                                        <div class="text-danger small">{{ form.nombre.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.apellido.label }}</label>
+                                        {{ form.apellido }}
+                                        {% if form.apellido.errors %}
+                                        <div class="text-danger small">{{ form.apellido.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.telefono.label }}</label>
+                                        {{ form.telefono }}
+                                        {% if form.telefono.errors %}
+                                        <div class="text-danger small">{{ form.telefono.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.email.label }}</label>
+                                        {{ form.email }}
+                                        {% if form.email.errors %}
+                                        <div class="text-danger small">{{ form.email.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.rfc.label }}</label>
+                                        {{ form.rfc }}
+                                        {% if form.rfc.errors %}
+                                        <div class="text-danger small">{{ form.rfc.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.fecha_nacimiento.label }}</label>
+                                        {{ form.fecha_nacimiento }}
+                                        {% if form.fecha_nacimiento.errors %}
+                                        <div class="text-danger small">{{ form.fecha_nacimiento.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">{{ form.notas.label }}</label>
+                                        {{ form.notas }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pestaña 2: Direcciones -->
+                            <div class="tab-pane fade" id="direcciones" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-12 mb-4">
+                                        <h6 class="mb-3"><i class="fas fa-file-invoice me-2"></i>Facturación</h6>
+                                        {{ form.direccion_facturacion }}
+                                    </div>
+                                    
+                                    <div class="col-12 mb-4">
+                                        <h6 class="mb-3"><i class="fas fa-shipping-fast me-2"></i>Envío</h6>
+                                        {{ form.direccion_envio }}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">{{ form.ciudad.label }}</label>
+                                        {{ form.ciudad }}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">{{ form.estado.label }}</label>
+                                        {{ form.estado }}
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">{{ form.codigo_postal.label }}</label>
+                                        {{ form.codigo_postal }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pestaña 3: Descuento -->
+                            <div class="tab-pane fade" id="descuento" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.tipo_cliente.label }}</label>
+                                        {{ form.tipo_cliente }}
+                                        {% if not puede_editar_descuento %}
+                                        <div class="alert alert-warning mt-2">
+                                            <i class="fas fa-lock"></i>
+                                            Solo administradores pueden modificar el tipo de cliente
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">{{ form.porcentaje_descuento.label }}</label>
+                                        <div class="input-group">
+                                            {{ form.porcentaje_descuento }}
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        {% if not puede_editar_descuento %}
+                                        <div class="alert alert-warning mt-2">
+                                            <i class="fas fa-lock"></i>
+                                            Solo administradores pueden modificar el descuento
+                                        </div>
+                                        {% endif %}
+                                        <small class="text-muted">
+                                            Normal: 0% | Frecuente: 1-15% | Premium: 16-50%
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <div class="card bg-light border-0">
+                                            <div class="card-body">
+                                                <h6><i class="fas fa-info-circle me-2"></i>Información de descuentos</h6>
+                                                <ul class="mb-0">
+                                                    <li><span class="badge bg-secondary">Normal</span> Sin descuento aplicable</li>
+                                                    <li><span class="badge bg-info">Frecuente</span> Descuento del 1% al 15%</li>
+                                                    <li><span class="badge bg-warning">Premium</span> Descuento del 16% al 50%</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Estado -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    {{ form.activo }}
+                                    <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                                        Cliente Activo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {{ accion }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validación de rangos de descuento según tipo de cliente
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoClienteSelect = document.getElementById('tipo_cliente_select');
+    const descuentoInput = document.getElementById('porcentaje_descuento_input');
+    
+    function actualizarRangoDescuento() {
+        const tipo = tipoClienteSelect.value;
+        
+        if (!tipo) return;
+        
+        switch(tipo) {
+            case 'normal':
+                descuentoInput.min = 0;
+                descuentoInput.max = 0;
+                descuentoInput.value = 0;
+                descuentoInput.disabled = true;
+                break;
+            case 'frecuente':
+                descuentoInput.min = 1;
+                descuentoInput.max = 15;
+                descuentoInput.disabled = false;
+                if (descuentoInput.value < 1 || descuentoInput.value > 15) {
+                    descuentoInput.value = 1;
+                }
+                break;
+            case 'premium':
+                descuentoInput.min = 16;
+                descuentoInput.max = 50;
+                descuentoInput.disabled = false;
+                if (descuentoInput.value < 16 || descuentoInput.value > 50) {
+                    descuentoInput.value = 16;
+                }
+                break;
+        }
+    }
+    
+    // Inicializar
+    actualizarRangoDescuento();
+    
+    // Escuchar cambios
+    tipoClienteSelect.addEventListener('change', actualizarRangoDescuento);
+    
+    // Validar antes de enviar
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const tipo = tipoClienteSelect.value;
+        const descuento = parseFloat(descuentoInput.value);
+        
+        if (tipo === 'normal' && descuento !== 0) {
+            e.preventDefault();
+            alert('Los clientes normales no pueden tener descuento');
+            return false;
+        }
+        
+        if (tipo === 'frecuente' && (descuento < 1 || descuento > 15)) {
+            e.preventDefault();
+            alert('El descuento para clientes frecuentes debe estar entre 1% y 15%');
+            return false;
+        }
+        
+        if (tipo === 'premium' && (descuento < 16 || descuento > 50)) {
+            e.preventDefault();
+            alert('El descuento para clientes premium debe estar entre 16% y 50%');
+            return false;
+        }
+    });
+});
+</script>
+
+<style>
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    background: rgba(13, 110, 253, 0.1);
+    border-bottom: 2px solid #0d6efd;
+}
+
+.form-control:disabled, .form-control[readonly] {
+    background-color: #f8f9fa;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+}
+
+.form-switch .form-check-input {
+    width: 3em;
+    height: 1.5em;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agrofeed PV{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* ===============================
+           DESIGN SYSTEM
+        ================================ */
+        :root {
+            --bg-main: #f0f2f5;
+            --bg-glass: rgba(255, 255, 255, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.2);
+            
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --accent: #3498db;
+            --accent-light: rgba(52, 152, 219, 0.1);
+            
+            --shadow-light: rgba(255, 255, 255, 0.9);
+            --shadow-dark: rgba(0, 0, 0, 0.06);
+            
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            
+            --sidebar-width: 280px;
+            --sidebar-collapsed: 80px;
+            
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --blur-intensity: blur(20px);
+        }
+        
+        /* ===============================
+           BASE STYLES
+        ================================ */
+        body {
+            background: var(--bg-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* ===============================
+           GLASSMORPHISM UTILITIES
+        ================================ */
+        .glass {
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid var(--border-glass);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+        
+        .neumorphism {
+            background: var(--bg-main);
+            box-shadow: 
+                8px 8px 16px var(--shadow-dark),
+                -8px -8px 16px var(--shadow-light);
+        }
+        
+        .card-glass {
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: var(--transition-smooth);
+        }
+        
+        .card-glass:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 15px 50px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        /* ===============================
+           APP LAYOUT
+        ================================ */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            transition: var(--transition-smooth);
+        }
+        
+        /* ===============================
+           SIDEBAR (Neumorphism + Glass)
+        ================================ */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(165deg, #f8f9fa 0%, #f0f2f5 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 
+                20px 0 40px rgba(0, 0, 0, 0.04),
+                inset 1px 0 0 rgba(255, 255, 255, 0.8);
+            padding: 1.5rem 1rem;
+            z-index: 100;
+            transition: var(--transition-smooth);
+        }
+        
+        .sidebar-collapsed .sidebar {
+            width: var(--sidebar-collapsed);
+        }
+        
+        .sidebar-header {
+            padding: 1.25rem 1rem;
+            margin-bottom: 2rem;
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.03),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .sidebar-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar-collapsed .sidebar-header h3 span {
+            display: none;
+        }
+        
+        /* ===============================
+           NAVIGATION
+        ================================ */
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: var(--transition-smooth);
+            font-size: 0.95rem;
+            font-weight: 500;
+            white-space: nowrap;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+        
+        .nav-link i {
+            font-size: 1.2rem;
+            min-width: 24px;
+            transition: var(--transition-smooth);
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--text-main);
+            border-color: rgba(52, 152, 219, 0.2);
+            transform: translateX(4px);
+        }
+        
+        .nav-link.active {
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 600;
+            border-color: rgba(52, 152, 219, 0.3);
+            box-shadow: 
+                0 4px 12px rgba(52, 152, 219, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .sidebar-collapsed .nav-link span {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+        
+        /* ===============================
+           SUBMENU SYSTEM
+        ================================ */
+        .has-submenu .nav-link {
+            position: relative;
+        }
+        
+        .submenu-toggle {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .submenu-toggle.rotated {
+            transform: rotate(90deg);
+        }
+        
+        .submenu {
+            margin-left: 2rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .submenu.show {
+            max-height: 500px;
+        }
+        
+        .submenu .nav-link {
+            padding-left: 2.5rem;
+            font-size: 0.9rem;
+            border-left: 2px solid rgba(52, 152, 219, 0.1);
+        }
+        
+        .sidebar-collapsed .submenu {
+            display: none !important;
+        }
+        
+        /* ===============================
+           SECTION TITLES
+        ================================ */
+        .section-title {
+            padding: 1rem 1rem 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 1.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .sidebar-collapsed .section-title {
+            display: none;
+        }
+        
+        /* ===============================
+           MAIN CONTENT AREA
+        ================================ */
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
+            min-height: 100vh;
+            transition: var(--transition-smooth);
+        }
+        
+        .sidebar-collapsed .main-content {
+            margin-left: calc(var(--sidebar-collapsed) - var(--sidebar-width));
+        }
+        
+        /* ===============================
+           TOP NAVBAR (Glass)
+        ================================ */
+        .navbar-top {
+            margin-bottom: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-xl);
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid var(--border-glass);
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .navbar-top .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .navbar-top .breadcrumb-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .navbar-top .breadcrumb-item.active {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+        
+        /* ===============================
+           CONTENT CARDS
+        ================================ */
+        .content-card {
+            border-radius: var(--radius-lg);
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid var(--border-glass);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: var(--transition-smooth);
+        }
+        
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 48px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+        
+        /* ===============================
+           BUTTONS
+        ================================ */
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: var(--text-main);
+            border-radius: var(--radius-md);
+            padding: 0.5rem 1rem;
+            transition: var(--transition-smooth);
+        }
+        
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-accent {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* ===============================
+           USER AVATAR
+        ================================ */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        /* ===============================
+           BADGES
+        ================================ */
+        .badge-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: var(--text-main);
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+        
+        /* ===============================
+           FOOTER
+        ================================ */
+        .footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            background: var(--bg-glass);
+            backdrop-filter: var(--blur-intensity);
+            border: 1px solid var(--border-glass);
+            box-shadow: 
+                0 -4px 20px rgba(0, 0, 0, 0.03),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        /* ===============================
+           DARK MODE
+        ================================ */
+        [data-bs-theme="dark"] {
+            --bg-main: #1a1d23;
+            --bg-glass: rgba(30, 33, 40, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            
+            --text-main: #e4e6eb;
+            --text-muted: #b0b3b8;
+            --accent: #4a9eff;
+            --accent-light: rgba(74, 158, 255, 0.15);
+            
+            --shadow-light: rgba(255, 255, 255, 0.05);
+            --shadow-dark: rgba(0, 0, 0, 0.3);
+        }
+        
+        /* ===============================
+           RESPONSIVE
+        ================================ */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                width: 280px;
+                z-index: 1050;
+                box-shadow: 20px 0 40px rgba(0, 0, 0, 0.2);
+            }
+            
+            .sidebar-show {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                padding: 1rem;
+            }
+            
+            .navbar-top {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+        }
+        
+        /* ===============================
+           UTILITIES
+        ================================ */
+        .blur-bg {
+            backdrop-filter: var(--blur-intensity);
+            -webkit-backdrop-filter: var(--blur-intensity);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .border-glow {
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        /* ===============================
+           ANIMATIONS
+        ================================ */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* ===============================
+           SCROLLBAR
+        ================================ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        [data-bs-theme="dark"] ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        [data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* ===============================
+           LOADING STATES
+        ================================ */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            to { left: 100%; }
+        }
+        
+        /* ===============================
+           NOTIFICATION BADGE
+        ================================ */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #ff4757, #ff3838);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+            border: 2px solid var(--bg-main);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if request.session.sidebar_collapsed %}sidebar-collapsed{% endif %}">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header text-center">
+                <h3 class="d-flex align-items-center justify-content-center gap-2 mb-0">
+                    <i class="bi bi-shop text-gradient fs-4"></i>
+                    <span class="text-gradient fw-bold">Agrofeed PV</span>
+                </h3>
+                <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">Sistema de Punto de Venta</small>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="nav-links">
+                {% if user.is_authenticated %}
+                    <!-- Dashboard -->
+                    <div class="section-title">Principal</div>
+                    <div class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'dashboard' or request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                           href="{% url 'dashboard' %}">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </div>
+
+                    <!-- Ventas -->
+                    {% if user.rol == 'admin' or user.rol == 'superadmin' or user.rol == 'cajero' %}
+                        <div class="section-title">Ventas</div>
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'venta_nueva' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'venta_nueva' %}">
+                                <i class="bi bi-cart-plus"></i>
+                                <span>Nueva Venta</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'ventas_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'ventas_lista' %}">
+                                <i class="bi bi-receipt"></i>
+                                <span>Historial Ventas</span>
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <!-- Caja -->
+                    {% if user.rol == 'admin' or user.rol == 'superadmin' or user.rol == 'cajero' %}
+                        <div class="section-title">Caja</div>
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'caja_principal' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'caja_principal' %}">
+                                <i class="bi bi-cash-stack"></i>
+                                <span>Caja Principal</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'apertura_caja' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'apertura_caja' %}">
+                                <i class="bi bi-unlock"></i>
+                                <span>Apertura</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'cierre_caja' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'cierre_caja' %}">
+                                <i class="bi bi-lock"></i>
+                                <span>Cierre</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'historial_cortes' in request.resolver_match.url_name or 'detalle_corte' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'historial_cortes' %}">
+                                <i class="bi bi-clock-history"></i>
+                                <span>Historial</span>
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <!-- Catálogos -->
+                    {% if user.rol == 'admin' or user.rol == 'superadmin' %}
+                        <div class="section-title">Catálogos</div>
+                        
+                        <div class="nav-item has-submenu">
+                            <a class="nav-link {% if 'catalogos' in request.resolver_match.app_name or 'productos' in request.resolver_match.url_name or 'categorias' in request.resolver_match.url_name or 'unidades' in request.resolver_match.url_name or 'proveedores' in request.resolver_match.url_name or 'inventario' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="#" data-bs-toggle="collapse" data-bs-target="#submenu-catalogos">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Catálogos</span>
+                                <i class="bi bi-chevron-right submenu-toggle ms-auto"></i>
+                            </a>
+                            <div class="submenu collapse {% if 'catalogos' in request.resolver_match.app_name or 'productos' in request.resolver_match.url_name or 'categorias' in request.resolver_match.url_name or 'unidades' in request.resolver_match.url_name or 'proveedores' in request.resolver_match.url_name or 'inventario' in request.resolver_match.url_name %}show{% endif %}" 
+                                 id="submenu-catalogos">
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'productos_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'productos_lista' %}">
+                                        <span>Productos</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'productos_crear' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'productos_crear' %}">
+                                        <span>Nuevo Producto</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'categorias_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'categorias_lista' %}">
+                                        <span>Categorías</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'unidades_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'unidades_lista' %}">
+                                        <span>Unidades</span>
+                                    </a>
+                                </div>
+                                <div class = "nav-item">
+                                    <a class ="nav-link {% if 'clientes_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'clientes_lista' %}">
+                                        <span>Clientes</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'proveedores_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'proveedores_lista' %}">
+                                        <span>Proveedores</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'inventario_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'inventario_lista' %}">
+                                        <span>Inventario</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Sucursales -->
+                    {% if user.rol == 'superadmin' or user.rol == 'admin' %}
+                        <div class="section-title">Sucursales</div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'sucursales_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'sucursales_lista' %}">
+                                <i class="bi bi-shop-window"></i>
+                                <span>Sucursales</span>
+                            </a>
+                        </div>
+                        
+                        {% if user.rol == 'superadmin' %}
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'sucursales_crear' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'sucursales_crear' %}">
+                                <i class="bi bi-plus-circle"></i>
+                                <span>Nueva Sucursal</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'transferencias_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'transferencias_lista' %}">
+                                <i class="bi bi-arrow-left-right"></i>
+                                <span>Transferencias</span>
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <!-- Usuarios -->
+                    {% if user.rol == 'superadmin' %}
+                        <div class="section-title">Administración</div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'usuarios_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'usuarios_lista' %}">
+                                <i class="bi bi-people"></i>
+                                <span>Usuarios</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'usuarios_crear' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'usuarios_crear' %}">
+                                <i class="bi bi-person-plus"></i>
+                                <span>Nuevo Usuario</span>
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <!-- Sistema -->
+                    <div class="section-title">Sistema</div>
+                    
+                    <div class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" class="w-100">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-start w-100 border-0 bg-transparent text-danger">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Cerrar Sesión</span>
+                            </button>
+                        </form>
+                    </div>
+
+                {% endif %}
+            </nav>
+
+            <!-- User Info -->
+            {% if user.is_authenticated %}
+            <div class="mt-auto pt-3 border-top border-light border-opacity-10">
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-3">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold small">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="text-muted extra-small">
+                            <span class="badge-glass">{{ user.get_rol_display }}</span>
+                            {% if user.sucursal %}
+                            <div class="mt-1">{{ user.sucursal.nombre|truncatechars:20 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navbar -->
+            <nav class="navbar-top d-flex align-items-center justify-content-between gap-3">
+                <!-- Left Side -->
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn-glass p-2" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'dashboard' %}">Inicio</a>
+                            </li>
+                            {% block breadcrumb %}{% endblock %}
+                        </ol>
+                    </nav>
+                </div>
+
+                <!-- Center Stats -->
+                <div class="d-none d-lg-flex align-items-center gap-4">
+                    <div class="text-center">
+                        <div class="small text-muted">Ventas Hoy</div>
+                        <div class="fw-bold" id="ventasHoy">$0.00</div>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <div class="small text-muted">Caja</div>
+                        <div class="fw-bold text-success" id="estadoCaja">Abierta</div>
+                    </div>
+                </div>
+
+                <!-- Right Side -->
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Search -->
+                    <div class="d-none d-md-block">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Buscar..." id="globalSearch">
+                            <button class="btn btn-outline-secondary" type="button" id="btnBuscarGlobal">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <a class="btn-glass p-2 position-relative" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-2" style="min-width: 300px;">
+                            <h6 class="dropdown-header">Notificaciones</h6>
+                            <div id="notificationsList">
+                                <div class="dropdown-item">
+                                    <div class="d-flex gap-2">
+                                        <div class="flex-shrink-0">
+                                            <i class="bi bi-cart-check text-success"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="small">Nueva venta completada</div>
+                                            <div class="extra-small text-muted">Hace 5 minutos</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Dropdown -->
+                    <div class="dropdown">
+                        <a class="btn-glass p-2 d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
+                            <div class="user-avatar">
+                                {{ user.username|first|upper }}
+                            </div>
+                            <div class="d-none d-md-block">
+                                <div class="small fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="extra-small text-muted">{{ user.get_rol_display }}</div>
+                            </div>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <h6 class="dropdown-header">Cuenta</h6>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi bi-person me-2"></i> Mi Perfil
+                            </a>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi bi-key me-2"></i> Cambiar Contraseña
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" onclick="toggleDarkMode()">
+                                <i class="bi bi-moon me-2"></i> Modo Oscuro
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show content-card" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        {% if message.tags == 'success' %}
+                        <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+                        {% elif message.tags == 'error' or message.tags == 'danger' %}
+                        <i class="bi bi-exclamation-circle-fill fs-5 text-danger"></i>
+                        {% elif message.tags == 'warning' %}
+                        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                        {% elif message.tags == 'info' %}
+                        <i class="bi bi-info-circle-fill fs-5 text-info"></i>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Main Content -->
+            {% block content %}{% endblock %}
+
+            <!-- Footer -->
+            <footer class="footer mt-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <span class="text-muted small">
+                            <i class="bi bi-c-circle"></i> {% now "Y" %} Agrofeed PV - Sistema de Punto de Venta
+                        </span>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <span class="text-muted small">
+                            <i class="bi bi-clock"></i> {% now "H:i" %} | 
+                            <i class="bi bi-calendar"></i> {% now "d/m/Y" %} |
+                            {% if user.is_authenticated %}
+                            <i class="bi bi-person"></i> {{ user.username }}
+                            {% else %}
+                            <i class="bi bi-person-x"></i> No autenticado
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar Toggle
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        sidebarToggle.addEventListener('click', function() {
+            document.body.classList.toggle('sidebar-collapsed');
+            
+            // Guardar estado
+            const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+            sessionStorage.setItem('sidebarCollapsed', isCollapsed);
+            
+            // Enviar al servidor
+            fetch('/set-sidebar-state/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({collapsed: isCollapsed})
+            });
+        });
+
+        // Restaurar estado
+        document.addEventListener('DOMContentLoaded', function() {
+            const isCollapsed = sessionStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                document.body.classList.add('sidebar-collapsed');
+            }
+            
+            // Manejar submenús
+            document.querySelectorAll('.has-submenu > .nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (!document.body.classList.contains('sidebar-collapsed')) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('data-bs-target');
+                        const target = document.querySelector(targetId);
+                        const toggleIcon = this.querySelector('.submenu-toggle');
+                        
+                        if (toggleIcon) {
+                            toggleIcon.classList.toggle('rotated');
+                        }
+                        
+                        if (target) {
+                            target.classList.toggle('show');
+                        }
+                    }
+                });
+            });
+            
+            // Resaltar enlaces activos
+            highlightActiveLinks();
+            
+            // Restaurar modo oscuro
+            restoreDarkMode();
+        });
+
+        // Resaltar enlaces activos
+        function highlightActiveLinks() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkPath = link.getAttribute('href');
+                if (linkPath && linkPath !== '#') {
+                    if (currentPath === linkPath || currentPath.startsWith(linkPath + '/')) {
+                        link.classList.add('active');
+                        
+                        // Abrir submenu padre
+                        const parentSubmenu = link.closest('.submenu');
+                        if (parentSubmenu) {
+                            parentSubmenu.classList.add('show');
+                            const parentLink = parentSubmenu.previousElementSibling;
+                            if (parentLink && parentLink.classList.contains('nav-link')) {
+                                parentLink.classList.add('active');
+                                const toggleIcon = parentLink.querySelector('.submenu-toggle');
+                                if (toggleIcon) {
+                                    toggleIcon.classList.add('rotated');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // CSRF Token Helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-bs-theme') === 'dark';
+            
+            if (isDark) {
+                html.setAttribute('data-bs-theme', 'light');
+                localStorage.setItem('darkMode', 'false');
+            } else {
+                html.setAttribute('data-bs-theme', 'dark');
+                localStorage.setItem('darkMode', 'true');
+            }
+        }
+
+        function restoreDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'true') {
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+            }
+        }
+
+        // Global Search
+        document.getElementById('btnBuscarGlobal')?.addEventListener('click', function() {
+            const query = document.getElementById('globalSearch').value;
+            if (query.trim()) {
+                alert(`Buscando: ${query}`);
+            }
+        });
+
+        document.getElementById('globalSearch')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('btnBuscarGlobal').click();
+            }
+        });
+
+        // Mobile Sidebar Toggle
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('.sidebar');
+            document.addEventListener('click', function(e) {
+                if (!sidebar.contains(e.target) && !document.getElementById('sidebarToggle').contains(e.target)) {
+                    sidebar.classList.remove('sidebar-show');
+                }
+            });
+            
+            document.getElementById('sidebarToggle').addEventListener('click', function() {
+                sidebar.classList.toggle('sidebar-show');
+            });
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

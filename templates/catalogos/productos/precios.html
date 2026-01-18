@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Precios - {{ producto.nombre }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_lista' %}">Productos</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_detalle' producto.id %}">{{ producto.codigo }}</a></li>
+<li class="breadcrumb-item active">Gestionar Precios</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">Gestionar Precios y Stock</h2>
+                <p class="text-muted mb-0">{{ producto.codigo }} - {{ producto.nombre }}</p>
+            </div>
+            <a href="{% url 'productos_detalle' producto.id %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Configuración por Sucursal</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr class="table-light">
+                                    <th>Sucursal</th>
+                                    <th class="text-center">Estado Sucursal</th>
+                                    <th class="text-end">Precio de Venta</th>
+                                    <th class="text-center">Stock Actual</th>
+                                    <th class="text-center">Stock Mínimo</th>
+                                    <th class="text-center">Stock Máximo</th>
+                                    <th class="text-center">Estado Producto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ps in productos_sucursal %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ ps.sucursal.nombre }}</strong><br>
+                                        <small class="text-muted">{{ ps.sucursal.direccion|truncatechars:30 }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if ps.sucursal.activa %}
+                                        <span class="badge bg-success">Activa</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactiva</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" 
+                                                   name="precio_{{ ps.id }}" 
+                                                   value="{{ ps.precio_venta|floatformat:2 }}"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" 
+                                               name="stock_{{ ps.id }}" 
+                                               value="{{ ps.stock|floatformat:2 }}"
+                                               step="0.01" min="0">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" 
+                                               name="stock_min_{{ ps.id }}" 
+                                               value="{{ ps.stock_minimo|floatformat:2 }}"
+                                               step="0.01" min="0">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" 
+                                               name="stock_max_{{ ps.id }}" 
+                                               value="{{ ps.stock_maximo|floatformat:2 }}"
+                                               step="0.01" min="0">
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="activo_{{ ps.id }}"
+                                                   {% if ps.activo %}checked{% endif %}>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="bi bi-shop text-muted" style="font-size: 2rem;"></i>
+                                        <p class="mt-3 text-muted">No hay sucursales configuradas</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Nota:</strong> Solo el superadministrador puede modificar los precios y stocks. 
+                        Los cambios se aplicarán inmediatamente a todas las sucursales.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'productos_detalle' producto.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen del Producto -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Resumen del Producto</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Código:</strong>
+                        <p class="mb-2">{{ producto.codigo }}</p>
+                        
+                        <strong>Nombre:</strong>
+                        <p class="mb-2">{{ producto.nombre }}</p>
+                        
+                        <strong>Categoría:</strong>
+                        <p class="mb-2">{{ producto.categoria|default:"-" }}</p>
+                    </div>
+                    <div class="col-6">
+                        <strong>Proveedor:</strong>
+                        <p class="mb-2">{{ producto.proveedor|default:"-" }}</p>
+                        
+                        <strong>Costo Promedio:</strong>
+                        <p class="mb-2">${{ producto.costo_promedio|floatformat:2 }}</p>
+                        
+                        <strong>Stock Total:</strong>
+                        <p class="mb-0">{{ producto.stock_total }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Instrucciones</h5>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li>Modifica los precios según cada sucursal</li>
+                    <li>Ajusta el stock actual si es necesario</li>
+                    <li>Configura los niveles de stock mínimo y máximo</li>
+                    <li>Activa/desactiva el producto por sucursal</li>
+                    <li>Guarda los cambios al finalizar</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

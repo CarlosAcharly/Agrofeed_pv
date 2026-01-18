@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle Corte #{{ corte.id }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'caja_principal' %}">Caja</a></li>
+<li class="breadcrumb-item active">Detalle Corte #{{ corte.id }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Corte #{{ corte.id }}</h4>
+                    <a href="{% url 'historial_cortes' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Sucursal:</strong> {{ corte.sucursal.nombre }}</p>
+                        <p><strong>Usuario:</strong> {{ corte.usuario.get_full_name|default:corte.usuario.username }}</p>
+                        <p><strong>Fecha Apertura:</strong> {{ corte.fecha_inicio|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        {% if corte.fecha_fin %}
+                        <p><strong>Fecha Cierre:</strong> {{ corte.fecha_fin|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Duración:</strong> {{ corte.fecha_inicio|timesince:corte.fecha_fin }}</p>
+                        {% endif %}
+                        <p><strong>Total Ventas:</strong> <span class="h4 text-success">${{ corte.total_ventas|floatformat:2 }}</span></p>
+                    </div>
+                </div>
+                
+                <h5>Ventas del Período</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Venta ID</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas %}
+                            <tr>
+                                <td>#{{ venta.id }}</td>
+                                <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ venta.usuario.username }}</td>
+                                <td class="text-end">${{ venta.total|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No hay ventas en este período</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Total:</th>
+                                <th class="text-end">${{ total_ventas|floatformat:2 }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="3" class="text-end">Cantidad:</th>
+                                <th class="text-end">{{ cantidad_ventas }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button onclick="window.print()" class="btn btn-primary">
+                        <i class="bi bi-printer"></i> Imprimir Reporte
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

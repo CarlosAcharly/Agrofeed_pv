@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle Cliente - {{ cliente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'clientes_lista' %}">Clientes</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ cliente.codigo }}</li>
+                </ol>
+            </nav>
+            <h1 class="h2 mb-0">{{ cliente.nombre_completo }}</h1>
+            <p class="text-muted mb-0">Detalle del cliente y su historial</p>
+        </div>
+        <div>
+            <a href="{% url 'clientes_lista' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna izquierda - Información del cliente -->
+        <div class="col-lg-4 mb-4">
+            <!-- Tarjeta de información -->
+            <div class="card glass-card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Información del Cliente</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-link text-muted p-0" type="button" 
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'clientes_editar' cliente.pk %}">
+                                        <i class="fas fa-edit me-2"></i>Editar
+                                    </a>
+                                </li>
+                                {% if user.es_admin or user.es_superadmin %}
+                                <li>
+                                    <a class="dropdown-item" href="#" 
+                                       onclick="toggleCliente({{ cliente.pk }})">
+                                        {% if cliente.activo %}
+                                        <i class="fas fa-ban me-2"></i>Desactivar
+                                        {% else %}
+                                        <i class="fas fa-check me-2"></i>Activar
+                                        {% endif %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'clientes_historial' cliente.pk %}">
+                                        <i class="fas fa-history me-2"></i>Historial Completo
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-lg rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3">
+                            <i class="fas fa-user text-primary fa-2x"></i>
+                        </div>
+                        <h4 class="mb-1">{{ cliente.nombre_completo }}</h4>
+                        <p class="text-muted mb-0">{{ cliente.codigo }}</p>
+                        
+                        <div class="mt-3">
+                            {% if cliente.tipo_cliente == 'normal' %}
+                                <span class="badge bg-secondary fs-6">Normal</span>
+                            {% elif cliente.tipo_cliente == 'frecuente' %}
+                                <span class="badge bg-info fs-6">Frecuente</span>
+                            {% elif cliente.tipo_cliente == 'premium' %}
+                                <span class="badge bg-warning fs-6">Premium</span>
+                            {% endif %}
+                            
+                            <span class="badge bg-success bg-opacity-10 text-success fs-6 ms-2">
+                                {{ cliente.porcentaje_descuento }}% Descuento
+                            </span>
+                            
+                            {% if cliente.activo %}
+                                <span class="badge bg-success fs-6 ms-2">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger fs-6 ms-2">Inactivo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h6 class="text-muted mb-2">Información de Contacto</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-phone text-muted me-2"></i>
+                                <span>{{ cliente.telefono|default:"No especificado" }}</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-envelope text-muted me-2"></i>
+                                <span>{{ cliente.email|default:"No especificado" }}</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-id-card text-muted me-2"></i>
+                                <span>{{ cliente.rfc|default:"No especificado" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <h6 class="text-muted mb-2">Dirección de Facturación</h6>
+                            <p class="mb-0">{{ cliente.direccion_facturacion|default:"No especificada" }}</p>
+                            {% if cliente.ciudad or cliente.estado or cliente.codigo_postal %}
+                            <p class="text-muted small mb-0">
+                                {{ cliente.ciudad }} {{ cliente.estado }} {{ cliente.codigo_postal }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="text-muted mb-2">Dirección de Envío</h6>
+                            <p class="mb-0">{{ cliente.direccion_envio|default:"Misma que facturación" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="card glass-card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">Estadísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h3 class="mb-0">{{ total_ventas }}</h3>
+                                <p class="text-muted mb-0 small">Total Compras</p>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h3 class="mb-0">${{ monto_total|floatformat:2 }}</h3>
+                                <p class="text-muted mb-0 small">Monto Total</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="mb-2">Última Compra</h6>
+                                {% if ultima_compra %}
+                                <p class="mb-1">
+                                    <strong>{{ ultima_compra.fecha|date:"d/m/Y" }}</strong>
+                                </p>
+                                <p class="mb-0 text-muted small">
+                                    Monto: ${{ ultima_compra.total|floatformat:2 }}
+                                </p>
+                                {% else %}
+                                <p class="mb-0 text-muted">Sin compras registradas</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha - Historial -->
+        <div class="col-lg-8">
+            <!-- Pestañas -->
+            <ul class="nav nav-tabs mb-4" id="historialTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="compras-tab" data-bs-toggle="tab" 
+                            data-bs-target="#compras" type="button" role="tab">
+                        <i class="fas fa-shopping-cart me-2"></i>Historial de Compras
+                        <span class="badge bg-primary ms-2">{{ total_ventas }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="descuentos-tab" data-bs-toggle="tab" 
+                            data-bs-target="#descuentos" type="button" role="tab">
+                        <i class="fas fa-percentage me-2"></i>Historial de Descuentos
+                    </button>
+                </li>
+                {% if puede_editar_descuento %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="ajustar-tab" data-bs-toggle="tab" 
+                            data-bs-target="#ajustar" type="button" role="tab">
+                        <i class="fas fa-sliders-h me-2"></i>Ajustar Descuento
+                    </button>
+                </li>
+                {% endif %}
+            </ul>
+
+            <!-- Contenido de pestañas -->
+            <div class="tab-content" id="historialTabsContent">
+                <!-- Pestaña 1: Historial de Compras -->
+                <div class="tab-pane fade show active" id="compras" role="tabpanel">
+                    <div class="card glass-card border-0 shadow-sm">
+                        <div class="card-body">
+                            {% if ventas %}
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Folio</th>
+                                            <th>Total</th>
+                                            <th>Estado</th>
+                                            <th class="text-end">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for venta in ventas %}
+                                        <tr>
+                                            <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                                            <td>
+                                                <span class="badge bg-primary bg-opacity-10 text-primary">
+                                                    {{ venta.folio|default:venta.id }}
+                                                </span>
+                                            </td>
+                                            <td>${{ venta.total|floatformat:2 }}</td>
+                                            <td>
+                                                {% if venta.estado == 'completada' %}
+                                                <span class="badge bg-success">Completada</span>
+                                                {% elif venta.estado == 'cancelada' %}
+                                                <span class="badge bg-danger">Cancelada</span>
+                                                {% else %}
+                                                <span class="badge bg-warning">{{ venta.estado|title }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> Ver
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Paginación -->
+                            {% if ventas.paginator.num_pages > 1 %}
+                            <div class="d-flex justify-content-center mt-3">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination">
+                                        {% if ventas.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ ventas.previous_page_number }}">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        
+                                        {% for num in ventas.paginator.page_range %}
+                                            {% if ventas.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                            {% elif num > ventas.number|add:'-3' and num < ventas.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if ventas.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ ventas.next_page_number }}">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                            
+                            {% else %}
+                            <div class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                    <h5>No hay compras registradas</h5>
+                                    <p>Este cliente aún no ha realizado ninguna compra.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pestaña 2: Historial de Descuentos -->
+                <div class="tab-pane fade" id="descuentos" role="tabpanel">
+                    <div class="card glass-card border-0 shadow-sm">
+                        <div class="card-body">
+                            {% if historial_descuentos %}
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Tipo Anterior</th>
+                                            <th>Tipo Nuevo</th>
+                                            <th>Descuento Anterior</th>
+                                            <th>Descuento Nuevo</th>
+                                            <th>Usuario</th>
+                                            <th>Motivo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for historial in historial_descuentos %}
+                                        <tr>
+                                            <td>{{ historial.fecha_cambio|date:"d/m/Y H:i" }}</td>
+                                            <td>
+                                                {% if historial.tipo_cliente_anterior == 'normal' %}
+                                                <span class="badge bg-secondary">Normal</span>
+                                                {% elif historial.tipo_cliente_anterior == 'frecuente' %}
+                                                <span class="badge bg-info">Frecuente</span>
+                                                {% elif historial.tipo_cliente_anterior == 'premium' %}
+                                                <span class="badge bg-warning">Premium</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if historial.tipo_cliente_nuevo == 'normal' %}
+                                                <span class="badge bg-secondary">Normal</span>
+                                                {% elif historial.tipo_cliente_nuevo == 'frecuente' %}
+                                                <span class="badge bg-info">Frecuente</span>
+                                                {% elif historial.tipo_cliente_nuevo == 'premium' %}
+                                                <span class="badge bg-warning">Premium</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                    {{ historial.porcentaje_anterior }}%
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success bg-opacity-10 text-success">
+                                                    {{ historial.porcentaje_nuevo }}%
+                                                </span>
+                                            </td>
+                                            <td>{{ historial.usuario.username }}</td>
+                                            <td>{{ historial.motivo|default:"-" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-history fa-3x mb-3"></i>
+                                    <h5>No hay cambios de descuento</h5>
+                                    <p>No se han registrado modificaciones en el descuento de este cliente.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pestaña 3: Ajustar Descuento (solo admin) -->
+                {% if puede_editar_descuento %}
+                <div class="tab-pane fade" id="ajustar" role="tabpanel">
+                    <div class="card glass-card border-0 shadow-sm">
+                        <div class="card-header bg-white border-0">
+                            <h5 class="mb-0">Ajustar Descuento del Cliente</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="ajustarDescuentoForm">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Tipo de Cliente</label>
+                                        <select class="form-control" id="nuevo_tipo_cliente" required>
+                                            <option value="normal" {% if cliente.tipo_cliente == 'normal' %}selected{% endif %}>Normal (0%)</option>
+                                            <option value="frecuente" {% if cliente.tipo_cliente == 'frecuente' %}selected{% endif %}>Frecuente (1-15%)</option>
+                                            <option value="premium" {% if cliente.tipo_cliente == 'premium' %}selected{% endif %}>Premium (16-50%)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Nuevo Porcentaje de Descuento</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" 
+                                                   id="nuevo_porcentaje" 
+                                                   value="{{ cliente.porcentaje_descuento }}"
+                                                   min="0" max="50" step="0.01" required>
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <small class="text-muted">
+                                            Rango permitido según tipo de cliente
+                                        </small>
+                                    </div>
+                                    
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Motivo del Cambio</label>
+                                        <textarea class="form-control" id="motivo_cambio" 
+                                                  rows="3" placeholder="Explique el motivo del cambio de descuento" required></textarea>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Cliente actual:</strong> {{ cliente.get_tipo_cliente_display }} con {{ cliente.porcentaje_descuento }}% de descuento.
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Actualizar Descuento
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetearFormulario()">
+                                            <i class="fas fa-undo"></i> Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCliente(clienteId) {
+    if (confirm('¿Estás seguro de cambiar el estado del cliente?')) {
+        window.location.href = `/catalogos/clientes/toggle/${clienteId}/`;
+    }
+}
+
+{% if puede_editar_descuento %}
+// Actualizar rangos según tipo de cliente
+document.getElementById('nuevo_tipo_cliente').addEventListener('change', function() {
+    const tipo = this.value;
+    const porcentajeInput = document.getElementById('nuevo_porcentaje');
+    
+    switch(tipo) {
+        case 'normal':
+            porcentajeInput.min = 0;
+            porcentajeInput.max = 0;
+            porcentajeInput.value = 0;
+            porcentajeInput.disabled = true;
+            break;
+        case 'frecuente':
+            porcentajeInput.min = 1;
+            porcentajeInput.max = 15;
+            porcentajeInput.disabled = false;
+            if (porcentajeInput.value < 1 || porcentajeInput.value > 15) {
+                porcentajeInput.value = 1;
+            }
+            break;
+        case 'premium':
+            porcentajeInput.min = 16;
+            porcentajeInput.max = 50;
+            porcentajeInput.disabled = false;
+            if (porcentajeInput.value < 16 || porcentajeInput.value > 50) {
+                porcentajeInput.value = 16;
+            }
+            break;
+    }
+});
+
+// Inicializar
+document.getElementById('nuevo_tipo_cliente').dispatchEvent(new Event('change'));
+
+// Enviar formulario de ajuste de descuento
+document.getElementById('ajustarDescuentoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        'tipo_cliente': document.getElementById('nuevo_tipo_cliente').value,
+        'porcentaje_descuento': document.getElementById('nuevo_porcentaje').value,
+        'motivo': document.getElementById('motivo_cambio').value,
+        'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    };
+    
+    fetch(`/catalogos/clientes/descuento/{{ cliente.pk }}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': data.csrfmiddlewaretoken,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+});
+
+function resetearFormulario() {
+    document.getElementById('ajustarDescuentoForm').reset();
+    document.getElementById('nuevo_tipo_cliente').dispatchEvent(new Event('change'));
+}
+{% endif %}
+</script>
+
+<style>
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    background: rgba(13, 110, 253, 0.1);
+    border-bottom: 2px solid #0d6efd;
+}
+
+.badge {
+    padding: 0.35em 0.65em;
+}
+
+.form-control:disabled {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} - Sucursales{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'sucursales_lista' %}">Sucursales</a></li>
+<li class="breadcrumb-item active">{{ titulo }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">{{ titulo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Columna Izquierda -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Información Básica</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.codigo.id_for_label }}" class="form-label">Código *</label>
+                                    {{ form.codigo }}
+                                    {% if form.codigo.errors %}
+                                    <div class="text-danger small">{{ form.codigo.errors }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">Identificador único de la sucursal</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre *</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}
+                                    <div class="text-danger small">{{ form.nombre.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.direccion.id_for_label }}" class="form-label">Dirección *</label>
+                                {{ form.direccion }}
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="{{ form.ciudad.id_for_label }}" class="form-label">Ciudad</label>
+                                    {{ form.ciudad }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.estado.id_for_label }}" class="form-label">Estado</label>
+                                    {{ form.estado }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.codigo_postal.id_for_label }}" class="form-label">Código Postal</label>
+                                    {{ form.codigo_postal }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.pais.id_for_label }}" class="form-label">País</label>
+                                {{ form.pais }}
+                            </div>
+                        </div>
+                        
+                        <!-- Columna Derecha -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Contacto y Horarios</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.telefono.id_for_label }}" class="form-label">Teléfono</label>
+                                    {{ form.telefono }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                    {{ form.email }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.encargado.id_for_label }}" class="form-label">Encargado</label>
+                                {{ form.encargado }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.rfc.id_for_label }}" class="form-label">RFC</label>
+                                {{ form.rfc }}
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="{{ form.horario_apertura.id_for_label }}" class="form-label">Horario Apertura</label>
+                                    {{ form.horario_apertura }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="{{ form.horario_cierre.id_for_label }}" class="form-label">Horario Cierre</label>
+                                    {{ form.horario_cierre }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ form.dias_operacion.id_for_label }}" class="form-label">Días de Operación</label>
+                                {{ form.dias_operacion }}
+                                <small class="text-muted">Ej: Lunes a Viernes, Lunes a Sábado</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuración -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 class="mb-3">Configuración de Operación</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.activa }}
+                                                <label class="form-check-label" for="{{ form.activa.id_for_label }}">
+                                                    <strong>Sucursal Activa</strong>
+                                                </label>
+                                                <small class="text-muted d-block">Permitir operaciones en esta sucursal</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.permite_ventas }}
+                                                <label class="form-check-label" for="{{ form.permite_ventas.id_for_label }}">
+                                                    <strong>Permitir Ventas</strong>
+                                                </label>
+                                                <small class="text-muted d-block">Habilitar punto de venta</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.permite_compras }}
+                                                <label class="form-check-label" for="{{ form.permite_compras.id_for_label }}">
+                                                    <strong>Permitir Compras</strong>
+                                                </label>
+                                                <small class="text-muted d-block">Habilitar recepción de mercancía</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'sucursales_lista' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> {{ accion }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if sucursal %}
+        <!-- Información adicional para edición -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información Adicional</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="mb-2">
+                            <strong>Fecha de creación:</strong><br>
+                            {{ sucursal.fecha_creacion|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-2">
+                            <strong>Última actualización:</strong><br>
+                            {{ sucursal.fecha_actualizacion|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-2">
+                            <strong>Estado operativo:</strong><br>
+                            {% if sucursal.estado_operativo == 'completa' %}
+                                <span class="badge bg-success">Completa</span>
+                            {% elif sucursal.estado_operativo == 'inactiva' %}
+                                <span class="badge bg-danger">Inactiva</span>
+                            {% elif sucursal.estado_operativo == 'mantenimiento' %}
+                                <span class="badge bg-warning">Mantenimiento</span>
+                            {% elif sucursal.estado_operativo == 'solo_ventas' %}
+                                <span class="badge bg-info">Solo Ventas</span>
+                            {% elif sucursal.estado_operativo == 'solo_compras' %}
+                                <span class="badge bg-primary">Solo Compras</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ sucursal.estado_operativo|title }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar clases Bootstrap a los campos
+    const formElements = document.querySelectorAll('input, select, textarea');
+    formElements.forEach(element => {
+        if (!element.classList.contains('btn') && element.type !== 'checkbox') {
+            element.classList.add('form-control');
+        }
+    });
+    
+    // Estilo especial para los switches
+    document.querySelectorAll('.form-check-input').forEach(element => {
+        element.classList.add('form-check-input');
+    });
+    
+    // Validar horarios
+    const horarioApertura = document.getElementById('{{ form.horario_apertura.id_for_label }}');
+    const horarioCierre = document.getElementById('{{ form.horario_cierre.id_for_label }}');
+    
+    function validarHorarios() {
+        if (horarioApertura.value && horarioCierre.value) {
+            if (horarioApertura.value >= horarioCierre.value) {
+                horarioCierre.setCustomValidity('El horario de cierre debe ser posterior al de apertura');
+                horarioCierre.classList.add('is-invalid');
+            } else {
+                horarioCierre.setCustomValidity('');
+                horarioCierre.classList.remove('is-invalid');
+            }
+        }
+    }
+    
+    if (horarioApertura && horarioCierre) {
+        horarioApertura.addEventListener('change', validarHorarios);
+        horarioCierre.addEventListener('change', validarHorarios);
+    }
+});
+</script>
+{% endblock %}

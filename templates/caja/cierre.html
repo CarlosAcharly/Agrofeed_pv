@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load humanize %}  <!-- Agregar este load -->
+
+{% block title %}Cierre de Caja{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'caja_principal' %}">Caja</a></li>
+<li class="breadcrumb-item active">Cierre de Caja</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Cierre de Caja</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Resumen del período:</strong><br>
+                    Sucursal: {{ sucursal.nombre }}<br>
+                    Abierta por: {{ corte_activo.usuario.username }}<br>
+                    Fecha apertura: {{ corte_activo.fecha_inicio|date:"d/m/Y H:i" }}<br>
+                    Fecha y hora actual: {% now "d/m/Y H:i" %}<br>
+                    Duración: {{ corte_activo.fecha_inicio|timesince }}  <!-- Cambiado aquí -->
+                </div>
+                
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr class="table-light">
+                                <th colspan="2" class="text-center">Resumen de Ventas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Cantidad de Ventas:</strong></td>
+                                <td class="text-end">{{ cantidad_ventas }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Ventas:</strong></td>
+                                <td class="text-end">${{ total_ventas|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Promedio por Venta:</strong></td>
+                                <td class="text-end">
+                                    {% if cantidad_ventas > 0 %}
+                                    ${{ total_ventas|floatformat:2|intcomma }}
+                                    {% else %}
+                                    $0.00
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Agregar detalles de ventas si hay -->
+                {% if ventas_periodo %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Folio</th>
+                                <th>Hora</th>
+                                <th>Cliente</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas_periodo %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        {{ venta.folio|default:venta.id }}
+                                    </span>
+                                </td>
+                                <td>{{ venta.fecha|date:"H:i" }}</td>
+                                <td>
+                                    {% if venta.cliente %}
+                                    {{ venta.cliente.nombre_completo|truncatechars:15 }}
+                                    {% else %}
+                                    <span class="text-muted">Público</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">${{ venta.total|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                <form method="post" action="{% url 'caja_cerrar' %}">  <!-- Asegúrate de que la URL sea correcta -->
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="efectivo_real" class="form-label">Efectivo en Caja (Real)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="efectivo_real" 
+                                           name="efectivo_real" step="0.01" min="0" 
+                                           value="{{ total_ventas|floatformat:2 }}" required>
+                                </div>
+                                <small class="text-muted">Cantidad real contada en efectivo</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Efectivo Esperado</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" class="form-control" 
+                                           value="{{ total_ventas|floatformat:2 }}" readonly>
+                                </div>
+                                <small class="text-muted">Total de ventas en efectivo</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="observaciones" class="form-label">Observaciones (opcional)</label>
+                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3" 
+                                  placeholder="Observaciones sobre el cierre..."></textarea>
+                    </div>
+
+                    <!-- Mostrar diferencia calculada -->
+                    <div class="alert alert-info" id="diferenciaAlert">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Diferencia:</strong>
+                                <span id="diferenciaText" class="ms-2">$0.00</span>
+                            </div>
+                            <div id="diferenciaIcon">
+                                <i class="bi bi-equals"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'caja_principal' %}" class="btn btn-secondary me-md-2">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="btnConfirmar">
+                            <i class="bi bi-lock"></i> Confirmar Cierre
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const efectivoReal = document.getElementById('efectivo_real');
+    const totalVentas = parseFloat('{{ total_ventas|default:0 }}') || 0;
+    const diferenciaText = document.getElementById('diferenciaText');
+    const diferenciaIcon = document.getElementById('diferenciaIcon');
+    const diferenciaAlert = document.getElementById('diferenciaAlert');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    
+    function calcularDiferencia() {
+        const efectivo = parseFloat(efectivoReal.value) || 0;
+        const diferencia = efectivo - totalVentas;
+        
+        diferenciaText.textContent = '$' + Math.abs(diferencia).toFixed(2);
+        
+        if (diferencia === 0) {
+            diferenciaText.className = 'text-success';
+            diferenciaIcon.innerHTML = '<i class="bi bi-check-circle text-success"></i>';
+            diferenciaAlert.className = 'alert alert-success';
+        } else if (diferencia > 0) {
+            diferenciaText.className = 'text-success';
+            diferenciaText.textContent = '+$' + diferencia.toFixed(2);
+            diferenciaIcon.innerHTML = '<i class="bi bi-plus-circle text-success"></i>';
+            diferenciaAlert.className = 'alert alert-success';
+        } else {
+            diferenciaText.className = 'text-danger';
+            diferenciaText.textContent = '-$' + Math.abs(diferencia).toFixed(2);
+            diferenciaIcon.innerHTML = '<i class="bi bi-dash-circle text-danger"></i>';
+            diferenciaAlert.className = 'alert alert-danger';
+        }
+    }
+    
+    // Calcular diferencia al cargar y cuando cambia el input
+    calcularDiferencia();
+    efectivoReal.addEventListener('input', calcularDiferencia);
+    
+    // Confirmar antes de enviar
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const efectivo = parseFloat(efectivoReal.value) || 0;
+        const diferencia = efectivo - totalVentas;
+        
+        if (Math.abs(diferencia) > 100) { // Si la diferencia es mayor a $100
+            if (!confirm(`¡ALERTA! Hay una diferencia de $${Math.abs(diferencia).toFixed(2)}.\n¿Está seguro de continuar con el cierre?`)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        if (!confirm('¿Está seguro de cerrar la caja? Esta acción no se puede deshacer.')) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Deshabilitar botón para evitar doble envío
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerHTML = '<i class="bi bi-hourglass-split"></i> Procesando...';
+    });
+});
+
+// Si necesitas usar 'now' en JavaScript, puedes obtenerlo así:
+const now = new Date();
+console.log('Fecha y hora actual (JS):', now.toLocaleString());
+</script>
+{% endblock %}

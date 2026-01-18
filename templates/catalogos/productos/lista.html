@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block title %}Productos - Catálogos{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item active">Productos</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">Productos</h2>
+                <p class="text-muted mb-0">Gestiona el catálogo de productos</p>
+            </div>
+            <div>
+                {% if user.rol == 'admin' or user.rol == 'superadmin' %}
+                <a href="{% url 'productos_crear' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nuevo Producto
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros y Estadísticas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" name="q" class="form-control" placeholder="Código o nombre..." value="{{ query }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="categoria" class="form-select">
+                            <option value="">Todas las categorías</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}" {% if categoria_id|stringformat:"i" == categoria.id|stringformat:"i" %}selected{% endif %}>
+                                {{ categoria.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="proveedor" class="form-select">
+                            <option value="">Todos los proveedores</option>
+                            {% for proveedor in proveedores %}
+                            <option value="{{ proveedor.id }}" {% if proveedor_id|stringformat:"i" == proveedor.id|stringformat:"i" %}selected{% endif %}>
+                                {{ proveedor.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="estado" class="form-select">
+                            <option value="activos" {% if estado == 'activos' %}selected{% endif %}>Activos</option>
+                            <option value="inactivos" {% if estado == 'inactivos' %}selected{% endif %}>Inactivos</option>
+                            <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <div class="col-md-1">
+                        <a href="{% url 'productos_lista' %}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                    <div class="col-md-1">
+                        <a href="#" class="btn btn-success w-100" title="Exportar">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tarjetas de Estadísticas -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Total Productos</h6>
+                        <h3 class="mb-0">{{ total_count }}</h3>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-primary rounded-circle">
+                            <i class="bi bi-box-seam"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Activos</h6>
+                        <h3 class="mb-0">{{ activos_count }}</h3>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-success rounded-circle">
+                            <i class="bi bi-check-circle"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Inactivos</h6>
+                        <h3 class="mb-0">{{ inactivos_count }}</h3>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-secondary rounded-circle">
+                            <i class="bi bi-slash-circle"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if sucursal %}
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Valor Inventario</h6>
+                        <h5 class="mb-0">
+                            {% with total=0 %}
+                                {% for producto in productos %}
+                                    {% if producto.stock and producto.costo_promedio %}
+                                        {% widthratio producto.stock 1 producto.costo_promedio as subtotal %}
+                                        {{ subtotal|add:total }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                        </h5>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-warning rounded-circle">
+                            <i class="bi bi-currency-dollar"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Lista de Productos -->
+<div class="card">
+    <div class="card-body">
+        {% if productos %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Proveedor</th>
+                        {% if sucursal %}
+                        <th class="text-center">Stock</th>
+                        <th class="text-end">Precio</th>
+                        {% endif %}
+                        <th class="text-center">Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                    <tr>
+                        <td>
+                            <strong>{{ producto.codigo }}</strong>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if producto.imagen %}
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                                     class="rounded me-2" width="40" height="40">
+                                {% else %}
+                                <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-box text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ producto.nombre }}</strong>
+                                    {% if producto.descripcion %}
+                                    <br><small class="text-muted">{{ producto.descripcion|truncatechars:50 }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ producto.categoria|default:"-" }}</td>
+                        <td>{{ producto.proveedor|default:"-" }}</td>
+                        
+                        {% if sucursal %}
+                        <td class="text-center">
+                            {% if producto.stock is not None %}
+                                <span class="badge bg-{% if producto.estado_stock == 'bajo' %}danger{% elif producto.estado_stock == 'alto' %}warning{% else %}success{% endif %}">
+                                    {{ producto.stock }}
+                                </span>
+                                <br>
+                                <small class="text-muted">Mín: {{ producto.stock_minimo|default:"-" }}</small>
+                            {% else %}
+                                <span class="badge bg-secondary">Sin stock</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if producto.precio_venta %}
+                            <strong>${{ producto.precio_venta|floatformat:2 }}</strong>
+                            {% else %}
+                            <span class="text-muted">No definido</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        
+                        <td class="text-center">
+                            {% if producto.activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'productos_detalle' producto.id %}" class="btn btn-info" title="Ver">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if user.rol == 'admin' or user.rol == 'superadmin' %}
+                                <a href="{% url 'productos_editar' producto.id %}" class="btn btn-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if user.rol == 'superadmin' %}
+                                <a href="{% url 'productos_precios' producto.id %}" class="btn btn-primary" title="Precios">
+                                    <i class="bi bi-currency-dollar"></i>
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if productos.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if productos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ productos.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}{% if proveedor_id %}&proveedor={{ proveedor_id }}{% endif %}{% if estado != 'activos' %}&estado={{ estado }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in productos.paginator.page_range %}
+                    {% if productos.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > productos.number|add:'-3' and num < productos.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}{% if proveedor_id %}&proveedor={{ proveedor_id }}{% endif %}{% if estado != 'activos' %}&estado={{ estado }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if productos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ productos.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if categoria_id %}&categoria={{ categoria_id }}{% endif %}{% if proveedor_id %}&proveedor={{ proveedor_id }}{% endif %}{% if estado != 'activos' %}&estado={{ estado }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
+            <h5 class="mt-3">No hay productos registrados</h5>
+            <p class="text-muted">Comienza agregando tu primer producto</p>
+            {% if user.rol == 'admin' or user.rol == 'superadmin' %}
+            <a href="{% url 'productos_crear' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Agregar Producto
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

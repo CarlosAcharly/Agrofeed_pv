@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Transferencia{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Nueva Transferencia</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'transferencias_lista' %}">Transferencias</a></li>
+        <li class="breadcrumb-item active">Nueva</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-exchange-alt me-1"></i>
+            Detalles de la Transferencia
+        </div>
+        <div class="card-body">
+            <form id="transferenciaForm" method="post">
+                {% csrf_token %}
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Sucursal Origen</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Sucursal Actual</label>
+                                    <input type="text" class="form-control" value="{{ sucursal_actual.nombre }}" readonly>
+                                    <input type="hidden" name="sucursal_origen" value="{{ sucursal_actual.id }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Sucursal Destino</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="sucursal_destino" class="form-label">Seleccionar Destino *</label>
+                                    <select class="form-select" id="sucursal_destino" name="sucursal_destino" required>
+                                        <option value="">Seleccione una sucursal</option>
+                                        {% for sucursal in form.sucursal_destino.field.queryset %}
+                                        {% if sucursal.id != sucursal_actual.id %}
+                                        <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Productos a Transferir -->
+                <div class="card border-info mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Productos a Transferir</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="buscarProducto" 
+                                           placeholder="Buscar producto por código, nombre o categoría...">
+                                    <button class="btn btn-outline-secondary" type="button" id="btnBuscar">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-primary w-100" id="btnAgregarProducto">
+                                    <i class="fas fa-plus me-1"></i> Agregar Producto
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Productos Seleccionados -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="productosTable">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Producto</th>
+                                        <th>Stock Disponible</th>
+                                        <th>Cantidad</th>
+                                        <th>Costo Unitario</th>
+                                        <th>Subtotal</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productosBody">
+                                    <!-- Los productos se agregarán dinámicamente aquí -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary">
+                                        <td colspan="5" class="text-end fw-bold">Total:</td>
+                                        <td id="totalTransferencia">$0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="mb-3">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea class="form-control" id="observaciones" name="observaciones" 
+                              rows="3" placeholder="Notas adicionales sobre la transferencia..."></textarea>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'transferencias_lista' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-1"></i> Enviar Transferencia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let productosSeleccionados = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    const btnAgregarProducto = document.getElementById('btnAgregarProducto');
+    const buscarProducto = document.getElementById('buscarProducto');
+    const productosBody = document.getElementById('productosBody');
+    const totalTransferencia = document.getElementById('totalTransferencia');
+    
+    // Cargar productos disponibles
+    cargarProductosDisponibles();
+    
+    btnAgregarProducto.addEventListener('click', function() {
+        abrirModalSeleccionProducto();
+    });
+    
+    buscarProducto.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            buscarProductos();
+        }
+    });
+});
+
+function cargarProductosDisponibles() {
+    // Aquí iría la llamada AJAX para cargar productos de la sucursal origen
+    console.log('Cargando productos disponibles...');
+}
+
+function abrirModalSeleccionProducto() {
+    // Aquí iría la lógica para abrir un modal de selección de productos
+    alert('Funcionalidad para seleccionar productos');
+}
+
+function buscarProductos() {
+    const query = document.getElementById('buscarProducto').value;
+    // Aquí iría la búsqueda AJAX de productos
+    console.log('Buscando productos:', query);
+}
+
+function agregarProducto(producto) {
+    productosSeleccionados.push(producto);
+    actualizarTablaProductos();
+}
+
+function actualizarTablaProductos() {
+    const tbody = document.getElementById('productosBody');
+    tbody.innerHTML = '';
+    let total = 0;
+    
+    productosSeleccionados.forEach((producto, index) => {
+        const subtotal = producto.cantidad * producto.precio_unitario;
+        total += subtotal;
+        
+        const row = `
+            <tr>
+                <td>${producto.codigo}</td>
+                <td>${producto.nombre}</td>
+                <td>${producto.stock_disponible}</td>
+                <td>
+                    <input type="number" class="form-control form-control-sm cantidad-producto" 
+                           value="${producto.cantidad}" min="1" max="${producto.stock_disponible}"
+                           data-index="${index}" style="width: 80px;">
+                </td>
+                <td>$${producto.precio_unitario.toFixed(2)}</td>
+                <td class="subtotal">$${subtotal.toFixed(2)}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="eliminarProducto(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+    
+    document.getElementById('totalTransferencia').textContent = `$${total.toFixed(2)}`;
+    
+    // Agregar event listeners para cambios en cantidad
+    document.querySelectorAll('.cantidad-producto').forEach(input => {
+        input.addEventListener('change', function() {
+            actualizarCantidadProducto(this.dataset.index, this.value);
+        });
+    });
+}
+
+function actualizarCantidadProducto(index, cantidad) {
+    const producto = productosSeleccionados[index];
+    const stockDisponible = producto.stock_disponible;
+    
+    if (cantidad > stockDisponible) {
+        alert(`La cantidad no puede ser mayor al stock disponible (${stockDisponible})`);
+        cantidad = stockDisponible;
+    }
+    
+    producto.cantidad = parseInt(cantidad);
+    actualizarTablaProductos();
+}
+
+function eliminarProducto(index) {
+    if (confirm('¿Eliminar este producto de la transferencia?')) {
+        productosSeleccionados.splice(index, 1);
+        actualizarTablaProductos();
+    }
+}
+
+// Validar formulario antes de enviar
+document.getElementById('transferenciaForm').addEventListener('submit', function(e) {
+    if (productosSeleccionados.length === 0) {
+        e.preventDefault();
+        alert('Debe agregar al menos un producto a la transferencia');
+        return;
+    }
+    
+    const sucursalDestino = document.getElementById('sucursal_destino').value;
+    if (!sucursalDestino) {
+        e.preventDefault();
+        alert('Debe seleccionar una sucursal destino');
+        return;
+    }
+    
+    // Agregar productos al formulario
+    productosSeleccionados.forEach((producto, index) => {
+        const inputProducto = document.createElement('input');
+        inputProducto.type = 'hidden';
+        inputProducto.name = `productos[${index}]`;
+        inputProducto.value = JSON.stringify(producto);
+        this.appendChild(inputProducto);
+    });
+});
+</script>
+{% endblock %}

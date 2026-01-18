@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}Sucursales - Administración{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item active">Sucursales</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">Sucursales</h2>
+                <p class="text-muted mb-0">Gestión de todas las sucursales del sistema</p>
+            </div>
+            <a href="{% url 'sucursales_crear' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nueva Sucursal
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros y Estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-2">
+                    <div class="col-md-6">
+                        <input type="text" name="q" class="form-control" 
+                               placeholder="Buscar sucursales..." value="{{ query }}">
+                    </div>
+                    <div class="col-md-4">
+                        <select name="estado" class="form-select">
+                            <option value="todas" {% if estado == 'todas' %}selected{% endif %}>Todas las sucursales</option>
+                            <option value="activas" {% if estado == 'activas' %}selected{% endif %}>Activas</option>
+                            <option value="inactivas" {% if estado == 'inactivas' %}selected{% endif %}>Inactivas</option>
+                            <option value="ventas" {% if estado == 'ventas' %}selected{% endif %}>Con ventas habilitadas</option>
+                            <option value="compras" {% if estado == 'compras' %}selected{% endif %}>Con compras habilitadas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <div class="col-md-1">
+                        <a href="{% url 'sucursales_lista' %}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="mb-0">{{ total_sucursales }}</h4>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="mb-0">{{ activas_count }}</h4>
+                        <small class="text-muted">Activas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Sucursales -->
+<div class="card">
+    <div class="card-body">
+        {% if sucursales_info %}
+        <div class="row">
+            {% for info in sucursales_info %}
+            {% with sucursal=info.sucursal %}
+            <div class="col-xl-4 col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ sucursal.nombre }}</h5>
+                            <small class="text-muted">{{ sucursal.codigo }}</small>
+                        </div>
+                        <span class="badge bg-{% if sucursal.activa %}success{% else %}danger{% endif %}">
+                            {% if sucursal.activa %}Activa{% else %}Inactiva{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <small class="text-muted">Dirección:</small>
+                            <p class="mb-2">{{ sucursal.direccion|truncatechars:60 }}</p>
+                            
+                            {% if sucursal.ciudad %}
+                            <small class="text-muted">Ubicación:</small>
+                            <p class="mb-0">{{ sucursal.ciudad }}, {{ sucursal.estado }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">Contacto:</small>
+                            <p class="mb-0">
+                                {% if sucursal.telefono %}{{ sucursal.telefono }} · {% endif %}
+                                {% if sucursal.encargado %}{{ sucursal.encargado }}{% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">Horario:</small>
+                            <p class="mb-0">{{ sucursal.horario_completo }}</p>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Ventas:</small>
+                                <span class="badge bg-{% if sucursal.permite_ventas %}success{% else %}secondary{% endif %}">
+                                    {% if sucursal.permite_ventas %}Habilitadas{% else %}Deshabilitadas{% endif %}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Compras:</small>
+                                <span class="badge bg-{% if sucursal.permite_compras %}success{% else %}secondary{% endif %}">
+                                    {% if sucursal.permite_compras %}Habilitadas{% else %}Deshabilitadas{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Estadísticas rápidas -->
+                        <div class="border-top pt-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <h6 class="mb-0">{{ info.usuarios_count }}</h6>
+                                    <small class="text-muted">Usuarios</small>
+                                </div>
+                                <div class="col-4">
+                                    <h6 class="mb-0">{{ info.productos_count }}</h6>
+                                    <small class="text-muted">Productos</small>
+                                </div>
+                                <div class="col-4">
+                                    <h6 class="mb-0">{{ info.ventas_hoy }}</h6>
+                                    <small class="text-muted">Ventas hoy</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'sucursales_detalle' sucursal.id %}" class="btn btn-sm btn-info">
+                                <i class="bi bi-eye"></i> Ver
+                            </a>
+                            <a href="{% url 'sucursales_editar' sucursal.id %}" class="btn btn-sm btn-warning">
+                                <i class="bi bi-pencil"></i> Editar
+                            </a>
+                            <a href="{% url 'sucursales_eliminar' sucursal.id %}" class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+        
+        <!-- Paginación -->
+        {% if sucursales_info.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if sucursales_info.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ sucursales_info.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if estado != 'todas' %}&estado={{ estado }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in sucursales_info.paginator.page_range %}
+                    {% if sucursales_info.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > sucursales_info.number|add:'-3' and num < sucursales_info.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if estado != 'todas' %}&estado={{ estado }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if sucursales_info.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ sucursales_info.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if estado != 'todas' %}&estado={{ estado }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-shop text-muted" style="font-size: 3rem;"></i>
+            <h5 class="mt-3">No hay sucursales registradas</h5>
+            <p class="text-muted">Comienza agregando tu primera sucursal</p>
+            <a href="{% url 'sucursales_crear' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Agregar Sucursal
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="{% url 'sucursales_crear' %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-lg mx-auto mb-3">
+                                    <span class="avatar-title bg-primary rounded-circle">
+                                        <i class="bi bi-shop fs-2"></i>
+                                    </span>
+                                </div>
+                                <h6 class="mb-0">Nueva Sucursal</h6>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="{% url 'transferencias_lista' %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-lg mx-auto mb-3">
+                                    <span class="avatar-title bg-success rounded-circle">
+                                        <i class="bi bi-arrow-left-right fs-2"></i>
+                                    </span>
+                                </div>
+                                <h6 class="mb-0">Transferencias</h6>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="#" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-lg mx-auto mb-3">
+                                    <span class="avatar-title bg-warning rounded-circle">
+                                        <i class="bi bi-file-earmark-text fs-2"></i>
+                                    </span>
+                                </div>
+                                <h6 class="mb-0">Reportes</h6>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="#" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-lg mx-auto mb-3">
+                                    <span class="avatar-title bg-info rounded-circle">
+                                        <i class="bi bi-graph-up fs-2"></i>
+                                    </span>
+                                </div>
+                                <h6 class="mb-0">Estadísticas</h6>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

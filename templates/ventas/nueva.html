@@ -1,0 +1,748 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Venta - Sistema POS{% endblock %}
+
+{% block extra_css %}
+<style>
+.glass-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+}
+
+.product-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0d6efd;
+}
+
+.product-card .product-img {
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px 8px 0 0;
+}
+
+.cart-item {
+    transition: all 0.2s ease;
+}
+
+.cart-item:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.btn-glass {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.btn-glass:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.badge-glass {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    backdrop-filter: blur(10px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Columna izquierda: Productos -->
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-0">Nueva Venta</h1>
+                    <p class="text-muted mb-0">Seleccione productos para agregar al carrito</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- Selector de cliente -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown" id="clienteDropdown">
+                            {% if cliente %}
+                            <i class="fas fa-user-check me-2"></i>
+                            {{ cliente.nombre_completo }}
+                            {% else %}
+                            <i class="fas fa-user-plus me-2"></i>
+                            Seleccionar Cliente
+                            {% endif %}
+                        </button>
+                        <div class="dropdown-menu p-3" style="min-width: 400px;">
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="buscarClienteInput" 
+                                           placeholder="Buscar cliente por nombre, código, teléfono...">
+                                    <button class="btn btn-primary" type="button" id="buscarClienteBtn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="resultadosCliente" style="max-height: 300px; overflow-y: auto;">
+                                <!-- Resultados se cargan aquí -->
+                            </div>
+                            <hr>
+                            <div class="text-center">
+                                <button class="btn btn-sm btn-outline-secondary" id="quitarClienteBtn">
+                                    <i class="fas fa-times"></i> Quitar Cliente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'venta_limpiar' %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> Limpiar
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Información del cliente seleccionado -->
+            {% if cliente %}
+            <div class="card glass-card border-0 shadow-sm mb-4">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-primary me-2">Cliente</span>
+                            <strong>{{ cliente.nombre_completo }}</strong>
+                            <span class="text-muted ms-2">{{ cliente.codigo }}</span>
+                            
+                            <span class="badge {% if cliente.tipo_cliente == 'normal' %}bg-secondary{% elif cliente.tipo_cliente == 'frecuente' %}bg-info{% else %}bg-warning{% endif %} ms-2">
+                                {{ cliente.get_tipo_cliente_display }}
+                            </span>
+                            
+                            {% if cliente.porcentaje_descuento > 0 %}
+                            <span class="badge bg-success ms-2">
+                                {{ cliente.porcentaje_descuento }}% Descuento
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" id="editarClienteBtn">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Filtros de productos -->
+            <div class="card glass-card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" id="filtroProductos" 
+                                   placeholder="Buscar productos por nombre, código...">
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-control" id="filtroCategoria">
+                                <option value="">Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lista de productos -->
+            <div class="row" id="listaProductos">
+                {% for ps in productos %}
+                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 producto-item" 
+                     data-id="{{ ps.id }}"
+                     data-nombre="{{ ps.producto.nombre|lower }}"
+                     data-codigo="{{ ps.producto.codigo|lower }}"
+                     data-categoria="{{ ps.producto.categoria.id|default:'' }}">
+                    <div class="card product-card h-100 border-0 shadow-sm">
+                        <div class="position-relative">
+                            {% if ps.producto.imagen %}
+                            <img src="{{ ps.producto.imagen.url }}" class="card-img-top product-img" 
+                                 alt="{{ ps.producto.nombre }}">
+                            {% else %}
+                            <div class="product-img bg-light d-flex align-items-center justify-content-center">
+                                <i class="fas fa-box text-muted fa-3x"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Badge de stock -->
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <span class="badge {% if ps.estado_stock == 'bajo' %}bg-danger{% elif ps.estado_stock == 'alto' %}bg-success{% else %}bg-info{% endif %}">
+                                    Stock: {{ ps.stock }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <h6 class="card-title mb-1">{{ ps.producto.nombre }}</h6>
+                            <p class="card-text text-muted small mb-2">
+                                {{ ps.producto.codigo }}
+                                {% if ps.producto.categoria %}
+                                <span class="d-block">{{ ps.producto.categoria.nombre }}</span>
+                                {% endif %}
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0 text-primary">${{ ps.precio_venta|floatformat:2 }}</h5>
+                                <div class="input-group input-group-sm" style="width: 120px;">
+                                    <input type="number" class="form-control cantidad-input" 
+                                           value="1" min="1" max="{{ ps.stock }}" step="1">
+                                    <button class="btn btn-primary agregar-btn" type="button"
+                                            data-id="{{ ps.id }}"
+                                            data-nombre="{{ ps.producto.nombre }}"
+                                            data-precio="{{ ps.precio_venta }}">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h4>No hay productos disponibles</h4>
+                        <p class="text-muted">No hay productos con stock en esta sucursal.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Columna derecha: Carrito -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 20px;">
+                <!-- Carrito de compras -->
+                <div class="card glass-card border-0 shadow-lg">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Carrito de Compras
+                            <span class="badge bg-primary ms-2" id="carritoCount">{{ carrito|length }}</span>
+                        </h5>
+                    </div>
+                    
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;" id="carritoItems">
+                        {% if carrito %}
+                            {% for item in carrito %}
+                            <div class="cart-item mb-3 pb-3 border-bottom" id="item-{{ item.id }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1 me-3">
+                                        <h6 class="mb-1">{{ item.nombre }}</h6>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <button class="btn btn-outline-secondary btn-cantidad" 
+                                                        type="button" data-action="decrease" data-id="{{ item.id }}">
+                                                    <i class="fas fa-minus"></i>
+                                                </button>
+                                                <input type="number" class="form-control text-center cantidad-actual" 
+                                                       value="{{ item.cantidad|floatformat:2 }}" 
+                                                       min="0.01" step="0.01" data-id="{{ item.id }}">
+                                                <button class="btn btn-outline-secondary btn-cantidad" 
+                                                        type="button" data-action="increase" data-id="{{ item.id }}">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted ms-2">${{ item.precio|floatformat:2 }} c/u</small>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <h6 class="mb-0">${{ item.subtotal|floatformat:2 }}</h6>
+                                        <button class="btn btn-sm btn-outline-danger mt-1 btn-remover" 
+                                                data-id="{{ item.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">El carrito está vacío</p>
+                            <p class="small text-muted">Agregue productos desde el catálogo</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Totales -->
+                    <div class="card-footer bg-white border-0">
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Subtotal:</span>
+                                <span class="fw-semibold" id="subtotalDisplay">${{ subtotal|floatformat:2 }}</span>
+                            </div>
+                            
+                            {% if cliente and cliente.porcentaje_descuento > 0 %}
+                            <div class="d-flex justify-content-between text-success">
+                                <span>
+                                    <i class="fas fa-percentage me-1"></i>
+                                    Descuento ({{ cliente.porcentaje_descuento }}%):
+                                </span>
+                                <span class="fw-semibold">- ${{ descuento_total|floatformat:2 }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Total:</h5>
+                                <h3 class="mb-0 text-primary" id="totalDisplay">${{ total|floatformat:2 }}</h3>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-grid gap-2 mt-3">
+                            <form method="post" action="{% url 'venta_finalizar' %}" id="finalizarForm">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-lg w-100" 
+                                        id="finalizarBtn" {% if not carrito %}disabled{% endif %}>
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Finalizar Venta
+                                </button>
+                            </form>
+                            
+                            <button type="button" class="btn btn-outline-secondary w-100" 
+                                    onclick="imprimirTicket()" {% if not carrito %}disabled{% endif %}>
+                                <i class="fas fa-print me-2"></i>
+                                Vista Previa Ticket
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resumen de descuento si aplica -->
+                {% if cliente and cliente.porcentaje_descuento > 0 %}
+                <div class="card glass-card border-0 shadow-sm mt-3 border-success border-opacity-25">
+                    <div class="card-body py-2">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                <i class="fas fa-percentage text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Descuento Aplicado</h6>
+                                <p class="mb-0 text-muted small">
+                                    Cliente {{ cliente.get_tipo_cliente_display }} - {{ cliente.porcentaje_descuento }}% de descuento
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para búsqueda de clientes -->
+<div class="modal fade" id="clienteModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Seleccionar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="modalBuscarCliente" 
+                               placeholder="Buscar por nombre, código, teléfono...">
+                        <button class="btn btn-primary" type="button" id="modalBuscarBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="modalResultados" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Filtro de productos
+    $('#filtroProductos').on('keyup', function() {
+        var filter = $(this).val().toLowerCase();
+        $('.producto-item').each(function() {
+            var nombre = $(this).data('nombre');
+            var codigo = $(this).data('codigo');
+            if (nombre.indexOf(filter) > -1 || codigo.indexOf(filter) > -1) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Filtro por categoría
+    $('#filtroCategoria').on('change', function() {
+        var categoria = $(this).val();
+        $('.producto-item').each(function() {
+            var itemCategoria = $(this).data('categoria');
+            if (!categoria || itemCategoria == categoria) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Agregar producto al carrito
+    $('.agregar-btn').click(function() {
+        var productoId = $(this).data('id');
+        var cantidadInput = $(this).siblings('.cantidad-input');
+        var cantidad = parseFloat(cantidadInput.val());
+        var stock = parseFloat(cantidadInput.attr('max'));
+        
+        if (cantidad > stock) {
+            alert('No hay suficiente stock. Disponible: ' + stock);
+            return;
+        }
+        
+        agregarProducto(productoId, cantidad);
+    });
+    
+    // Remover producto del carrito
+    $(document).on('click', '.btn-remover', function() {
+        var itemId = $(this).data('id');
+        removerProducto(itemId);
+    });
+    
+    // Cambiar cantidad en carrito
+    $(document).on('click', '.btn-cantidad', function() {
+        var itemId = $(this).data('id');
+        var action = $(this).data('action');
+        var input = $('.cantidad-actual[data-id="' + itemId + '"]');
+        var cantidad = parseFloat(input.val());
+        
+        if (action === 'increase') {
+            cantidad += 1;
+        } else if (action === 'decrease') {
+            cantidad = Math.max(0.01, cantidad - 1);
+        }
+        
+        if (cantidad <= 0) {
+            removerProducto(itemId);
+        } else {
+            actualizarCantidad(itemId, cantidad);
+        }
+    });
+    
+    // Búsqueda de clientes
+    $('#buscarClienteBtn').click(function() {
+        buscarClientes();
+    });
+    
+    $('#buscarClienteInput').on('keyup', function(e) {
+        if (e.keyCode === 13) {
+            buscarClientes();
+        }
+    });
+    
+    // Quitar cliente
+    $('#quitarClienteBtn').click(function() {
+        seleccionarCliente(null);
+    });
+    
+    // Editar cliente
+    $('#editarClienteBtn').click(function() {
+        {% if cliente %}
+        window.open("{% url 'clientes_editar' cliente.pk %}", '_blank');
+        {% endif %}
+    });
+});
+
+// Funciones AJAX
+function agregarProducto(productoId, cantidad) {
+    $.ajax({
+        url: "{% url 'venta_agregar_item' %}",
+        type: 'POST',
+        data: {
+            'producto_id': productoId,
+            'cantidad': cantidad,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                actualizarCarrito(response);
+            } else {
+                alert('Error: ' + response.error);
+            }
+        },
+        error: function() {
+            alert('Error al agregar producto');
+        }
+    });
+}
+
+function removerProducto(itemId) {
+    if (!confirm('¿Estás seguro de eliminar este producto del carrito?')) return;
+    
+    $.ajax({
+        url: "{% url 'venta_remover_item' %}",
+        type: 'POST',
+        data: {
+            'item_id': itemId,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                actualizarCarrito(response);
+            } else {
+                alert('Error: ' + response.error);
+            }
+        },
+        error: function() {
+            alert('Error al remover producto');
+        }
+    });
+}
+
+function actualizarCantidad(itemId, cantidad) {
+    $.ajax({
+        url: "{% url 'venta_actualizar_cantidad' %}",
+        type: 'POST',
+        data: {
+            'item_id': itemId,
+            'cantidad': cantidad,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                actualizarCarrito(response);
+            } else {
+                alert('Error: ' + response.error);
+            }
+        },
+        error: function() {
+            alert('Error al actualizar cantidad');
+        }
+    });
+}
+
+function buscarClientes() {
+    var query = $('#buscarClienteInput').val();
+    
+    $.ajax({
+        url: "{% url 'venta_buscar_cliente' %}",
+        type: 'GET',
+        data: {
+            'q': query
+        },
+        success: function(response) {
+            var html = '';
+            
+            if (response.clientes.length > 0) {
+                response.clientes.forEach(function(cliente) {
+                    html += '<div class="list-group-item list-group-item-action cliente-item" ' +
+                           'data-id="' + cliente.id + '" style="cursor: pointer;">' +
+                           '<div class="d-flex justify-content-between align-items-center">' +
+                           '<div>' +
+                           '<h6 class="mb-1">' + cliente.nombre + '</h6>' +
+                           '<small class="text-muted">' + cliente.codigo + ' | ' + cliente.telefono + '</small>' +
+                           '</div>' +
+                           '<div class="text-end">' +
+                           '<span class="badge ' + getBadgeClass(cliente.tipo_cliente) + '">' + cliente.tipo_cliente + '</span>' +
+                           '<br>' +
+                           '<small class="text-success">' + cliente.descuento + '% descuento</small>' +
+                           '</div>' +
+                           '</div>' +
+                           '</div>';
+                });
+            } else {
+                html = '<div class="text-center py-3">' +
+                      '<i class="fas fa-user-slash fa-2x text-muted mb-2"></i>' +
+                      '<p>No se encontraron clientes</p>' +
+                      '</div>';
+            }
+            
+            $('#resultadosCliente').html(html);
+            
+            // Agregar evento click a los clientes
+            $('.cliente-item').click(function() {
+                var clienteId = $(this).data('id');
+                seleccionarCliente(clienteId);
+            });
+        },
+        error: function() {
+            alert('Error al buscar clientes');
+        }
+    });
+}
+
+function seleccionarCliente(clienteId) {
+    $.ajax({
+        url: "{% url 'venta_seleccionar_cliente' %}",
+        type: 'POST',
+        data: {
+            'cliente_id': clienteId,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response) {
+            if (response.success) {
+                // Actualizar interfaz
+                if (response.cliente) {
+                    $('#clienteDropdown').html(
+                        '<i class="fas fa-user-check me-2"></i>' +
+                        response.cliente.nombre
+                    );
+                    
+                    // Mostrar información del cliente
+                    var clienteInfo = '<div class="card glass-card border-0 shadow-sm mb-4">' +
+                                     '<div class="card-body py-2">' +
+                                     '<div class="d-flex justify-content-between align-items-center">' +
+                                     '<div>' +
+                                     '<span class="badge bg-primary me-2">Cliente</span>' +
+                                     '<strong>' + response.cliente.nombre + '</strong>' +
+                                     '<span class="text-muted ms-2">' + response.cliente.codigo + '</span>' +
+                                     '<span class="badge ' + getBadgeClass(response.cliente.tipo_cliente) + ' ms-2">' +
+                                     response.cliente.tipo_cliente + '</span>' +
+                                     '<span class="badge bg-success ms-2">' +
+                                     response.cliente.descuento + '% Descuento</span>' +
+                                     '</div>' +
+                                     '<div>' +
+                                     '<button class="btn btn-sm btn-outline-secondary" onclick="editarCliente(' + response.cliente.id + ')">' +
+                                     '<i class="fas fa-edit"></i> Editar</button>' +
+                                     '</div>' +
+                                     '</div>' +
+                                     '</div>' +
+                                     '</div>';
+                    
+                    if ($('#clienteInfo').length) {
+                        $('#clienteInfo').replaceWith(clienteInfo);
+                    } else {
+                        $('.col-lg-8').prepend('<div id="clienteInfo">' + clienteInfo + '</div>');
+                    }
+                } else {
+                    $('#clienteDropdown').html(
+                        '<i class="fas fa-user-plus me-2"></i> Seleccionar Cliente'
+                    );
+                    $('#clienteInfo').remove();
+                }
+                
+                // Actualizar totales
+                actualizarTotales(response.subtotal, response.descuento_total, response.total, response.descuento_porcentaje);
+                
+                // Cerrar dropdown
+                $('.dropdown-menu').removeClass('show');
+            } else {
+                alert('Error: ' + response.error);
+            }
+        },
+        error: function() {
+            alert('Error al seleccionar cliente');
+        }
+    });
+}
+
+function actualizarCarrito(response) {
+    // Actualizar contador
+    $('#carritoCount').text(response.carrito.length);
+    
+    // Actualizar lista de items
+    var html = '';
+    if (response.carrito.length > 0) {
+        response.carrito.forEach(function(item) {
+            html += '<div class="cart-item mb-3 pb-3 border-bottom" id="item-' + item.id + '">' +
+                   '<div class="d-flex justify-content-between align-items-start">' +
+                   '<div class="flex-grow-1 me-3">' +
+                   '<h6 class="mb-1">' + item.nombre + '</h6>' +
+                   '<div class="d-flex align-items-center mb-2">' +
+                   '<div class="input-group input-group-sm" style="width: 120px;">' +
+                   '<button class="btn btn-outline-secondary btn-cantidad" type="button" ' +
+                   'data-action="decrease" data-id="' + item.id + '"><i class="fas fa-minus"></i></button>' +
+                   '<input type="number" class="form-control text-center cantidad-actual" ' +
+                   'value="' + item.cantidad + '" min="0.01" step="0.01" data-id="' + item.id + '">' +
+                   '<button class="btn btn-outline-secondary btn-cantidad" type="button" ' +
+                   'data-action="increase" data-id="' + item.id + '"><i class="fas fa-plus"></i></button>' +
+                   '</div>' +
+                   '<small class="text-muted ms-2">$' + item.precio.toFixed(2) + ' c/u</small>' +
+                   '</div>' +
+                   '</div>' +
+                   '<div class="text-end">' +
+                   '<h6 class="mb-0">$' + item.subtotal.toFixed(2) + '</h6>' +
+                   '<button class="btn btn-sm btn-outline-danger mt-1 btn-remover" ' +
+                   'data-id="' + item.id + '"><i class="fas fa-trash"></i></button>' +
+                   '</div>' +
+                   '</div>' +
+                   '</div>';
+        });
+        $('#finalizarBtn').prop('disabled', false);
+    } else {
+        html = '<div class="text-center py-5">' +
+              '<i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>' +
+              '<p class="text-muted">El carrito está vacío</p>' +
+              '</div>';
+        $('#finalizarBtn').prop('disabled', true);
+    }
+    
+    $('#carritoItems').html(html);
+    
+    // Actualizar totales
+    actualizarTotales(response.subtotal, response.descuento_total, response.total, response.descuento_porcentaje);
+}
+
+function actualizarTotales(subtotal, descuentoTotal, total, descuentoPorcentaje) {
+    $('#subtotalDisplay').text('$' + subtotal.toFixed(2));
+    $('#totalDisplay').text('$' + total.toFixed(2));
+    
+    // Actualizar o mostrar/ocultar línea de descuento
+    var descuentoHtml = '';
+    if (descuentoPorcentaje > 0) {
+        descuentoHtml = '<div class="d-flex justify-content-between text-success">' +
+                       '<span><i class="fas fa-percentage me-1"></i> Descuento (' + descuentoPorcentaje + '%):</span>' +
+                       '<span class="fw-semibold">- $' + descuentoTotal.toFixed(2) + '</span>' +
+                       '</div>';
+    }
+    
+    if ($('#descuentoLine').length) {
+        if (descuentoPorcentaje > 0) {
+            $('#descuentoLine').html(descuentoHtml).show();
+        } else {
+            $('#descuentoLine').hide();
+        }
+    } else if (descuentoPorcentaje > 0) {
+        $('<div id="descuentoLine">' + descuentoHtml + '</div>').insertBefore('#subtotalDisplay').next();
+    }
+}
+
+function getBadgeClass(tipoCliente) {
+    switch(tipoCliente) {
+        case 'Normal': return 'bg-secondary';
+        case 'Frecuente': return 'bg-info';
+        case 'Premium': return 'bg-warning';
+        default: return 'bg-secondary';
+    }
+}
+
+function editarCliente(clienteId) {
+    window.open("/catalogos/clientes/editar/" + clienteId + "/", '_blank');
+}
+
+function imprimirTicket() {
+    // Abrir ventana con vista previa del ticket
+    var w = window.open('/ventas/ticket-preview/', '_blank');
+}
+
+// Confirmar antes de finalizar venta
+$('#finalizarForm').submit(function(e) {
+    if (!confirm('¿Estás seguro de finalizar la venta? Esta acción no se puede deshacer.')) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

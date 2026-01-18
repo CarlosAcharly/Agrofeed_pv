@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajuste de Inventario - Catálogos{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_lista' %}">Catálogos</a></li>
+<li class="breadcrumb-item"><a href="{% url 'inventario_lista' %}">Inventario</a></li>
+<li class="breadcrumb-item active">Ajuste de Inventario</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Ajuste de Inventario</h4>
+                <p class="text-muted mb-0">Sucursal: {{ sucursal.nombre }}</p>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="producto" class="form-label">Producto *</label>
+                                <select class="form-control" id="producto" name="producto" required>
+                                    <option value="">Seleccionar producto</option>
+                                    {% for ps in productos %}
+                                    <option value="{{ ps.id }}">
+                                        {{ ps.producto.codigo }} - {{ ps.producto.nombre }} 
+                                        (Stock actual: {{ ps.stock }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="tipo" class="form-label">Tipo de Ajuste *</label>
+                                <select class="form-control" id="tipo" name="tipo" required>
+                                    <option value="">Seleccionar tipo</option>
+                                    <option value="entrada">Entrada de inventario</option>
+                                    <option value="salida">Salida de inventario</option>
+                                    <option value="ajuste">Ajuste manual</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cantidad" class="form-label">Cantidad *</label>
+                                <input type="number" class="form-control" id="cantidad" 
+                                       name="cantidad" step="0.01" min="0.01" required>
+                                <small class="text-muted">Ingrese la cantidad a ajustar</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="motivo" class="form-label">Motivo del Ajuste *</label>
+                                <textarea class="form-control" id="motivo" name="motivo" 
+                                          rows="3" required></textarea>
+                                <small class="text-muted">Describa el motivo del ajuste</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Información:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Entrada:</strong> Agrega productos al inventario (compra, devolución)</li>
+                            <li><strong>Salida:</strong> Retira productos del inventario (venta, pérdida)</li>
+                            <li><strong>Ajuste manual:</strong> Establece un nuevo valor exacto de stock</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'inventario_lista' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Registrar Ajuste
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Productos con Stock Bajo -->
+        <div class="card mt-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0 text-white">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Productos que Necesitan Reabastecimiento
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Mínimo</th>
+                                <th>Diferencia</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ps in productos %}
+                                {% if ps.estado_stock == 'bajo' %}
+                                <tr>
+                                    <td>{{ ps.producto.codigo }} - {{ ps.producto.nombre }}</td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ ps.stock }}</span>
+                                    </td>
+                                    <td>{{ ps.stock_minimo }}</td>
+                                    <td>
+                                        <span class="badge bg-warning">
+                                            {{ ps.stock_minimo|add:"-1"|floatformat:"0" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                                onclick="seleccionarProducto('{{ ps.id }}', '{{ ps.producto.codigo }} - {{ ps.producto.nombre }}')">
+                                            <i class="bi bi-plus-circle"></i> Ajustar
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function seleccionarProducto(id, nombre) {
+    document.getElementById('producto').value = id;
+    
+    // Mostrar notificación
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-info alert-dismissible fade show mt-3';
+    alertDiv.innerHTML = `
+        <i class="bi bi-info-circle me-2"></i>
+        Producto seleccionado: <strong>${nombre}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.card-body').prepend(alertDiv);
+    
+    // Desplazar a la vista
+    document.getElementById('producto').focus();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Validar formulario
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const cantidad = document.getElementById('cantidad').value;
+        const tipo = document.getElementById('tipo').value;
+        
+        if (tipo === 'salida' && parseFloat(cantidad) <= 0) {
+            e.preventDefault();
+            alert('Para salidas, la cantidad debe ser mayor a 0');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

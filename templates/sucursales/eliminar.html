@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Sucursal - Administración{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'sucursales_lista' %}">Sucursales</a></li>
+<li class="breadcrumb-item active">Eliminar Sucursal</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Eliminar Sucursal</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>¡Advertencia Crítica!</strong> Esta acción no se puede deshacer y afectará todo el sistema.
+                </div>
+                
+                <!-- Información de la Sucursal -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-lg me-3">
+                                <span class="avatar-title bg-primary rounded-circle">
+                                    <i class="bi bi-shop fs-2"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-1">{{ sucursal.nombre }}</h5>
+                                <p class="card-text text-muted mb-2">{{ sucursal.codigo }}</p>
+                                <p class="card-text mb-0">
+                                    <small class="text-muted">{{ sucursal.direccion_completa }}</small>
+                                </p>
+                            </div>
+                            <div class="ms-3">
+                                <span class="badge bg-{% if sucursal.activa %}success{% else %}danger{% endif %}">
+                                    {% if sucursal.activa %}Activa{% else %}Inactiva{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Verificación de Dependencias -->
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading mb-3">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        Verificación de Dependencias
+                    </h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <h2 class="mb-0 text-danger">{{ usuarios_count }}</h2>
+                                    <p class="text-muted mb-0">Usuarios Asignados</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <h2 class="mb-0 text-danger">{{ productos_count }}</h2>
+                                    <p class="text-muted mb-0">Productos en Stock</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <h2 class="mb-0 text-danger">{{ ventas_count }}</h2>
+                                    <p class="text-muted mb-0">Ventas Registradas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if usuarios_count > 0 or productos_count > 0 or ventas_count > 0 %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle-fill me-2"></i>
+                        <strong>No se puede eliminar esta sucursal porque tiene:</strong>
+                        <ul class="mb-0 mt-2">
+                            {% if usuarios_count > 0 %}
+                            <li>{{ usuarios_count }} usuario(s) asignado(s)</li>
+                            {% endif %}
+                            {% if productos_count > 0 %}
+                            <li>{{ productos_count }} producto(s) en inventario</li>
+                            {% endif %}
+                            {% if ventas_count > 0 %}
+                            <li>{{ ventas_count }} venta(s) histórica(s)</li>
+                            {% endif %}
+                        </ul>
+                        <p class="mb-0 mt-2">
+                            Para eliminar esta sucursal, primero debe:
+                            <ol class="mb-0 mt-2">
+                                {% if usuarios_count > 0 %}
+                                <li>Reasignar todos los usuarios a otra sucursal</li>
+                                {% endif %}
+                                {% if productos_count > 0 %}
+                                <li>Transferir o eliminar todos los productos del inventario</li>
+                                {% endif %}
+                                {% if ventas_count > 0 %}
+                                <li>Considerar que las ventas históricas se perderán</li>
+                                {% endif %}
+                            </ol>
+                        </p>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'sucursales_lista' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> Volver a Sucursales
+                        </a>
+                        <a href="{% url 'sucursales_editar' sucursal.id %}" class="btn btn-warning ms-2">
+                            <i class="bi bi-pencil"></i> Editar Sucursal
+                        </a>
+                        <a href="{% url 'sucursales_detalle' sucursal.id %}" class="btn btn-info ms-2">
+                            <i class="bi bi-eye"></i> Ver Detalles
+                        </a>
+                    </div>
+                    
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        Esta sucursal no tiene dependencias y puede ser eliminada de forma segura.
+                    </div>
+                    
+                    <p class="text-muted mb-4">
+                        ¿Estás absolutamente seguro de que quieres eliminar la sucursal 
+                        <strong>"{{ sucursal.nombre }}"</strong>? 
+                        Esta acción eliminará permanentemente la sucursal y toda su información del sistema.
+                    </p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'sucursales_lista' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Eliminar Sucursal
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+                
+                <!-- Información Adicional -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Información Detallada</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Encargado:</strong> {{ sucursal.encargado|default:"No asignado" }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Teléfono:</strong> {{ sucursal.telefono|default:"No registrado" }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Email:</strong> {{ sucursal.email|default:"No registrado" }}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Horario:</strong> {{ sucursal.horario_completo }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Días de operación:</strong> {{ sucursal.dias_operacion }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Fecha de creación:</strong> {{ sucursal.fecha_creacion|date:"d/m/Y" }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <strong>Capacidades:</strong>
+                            <div class="d-flex gap-2 mt-2">
+                                <span class="badge bg-{% if sucursal.permite_ventas %}success{% else %}secondary{% endif %}">
+                                    Ventas: {% if sucursal.permite_ventas %}Habilitadas{% else %}Deshabilitadas{% endif %}
+                                </span>
+                                <span class="badge bg-{% if sucursal.permite_compras %}success{% else %}secondary{% endif %}">
+                                    Compras: {% if sucursal.permite_compras %}Habilitadas{% else %}Deshabilitadas{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación adicional para eliminación
+    const deleteForm = document.querySelector('form');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const confirmed = confirm('¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsta acción:\n1. Eliminará permanentemente la sucursal\n2. No se puede deshacer\n3. Afectará todo el sistema\n\n¿Continuar con la eliminación?');
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Efecto visual para el botón de eliminar
+    const deleteBtn = document.querySelector('button[type="submit"]');
+    if (deleteBtn && deleteBtn.textContent.includes('Eliminar')) {
+        deleteBtn.addEventListener('mouseover', function() {
+            this.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ¡CONFIRMAR ELIMINACIÓN!';
+            this.classList.remove('btn-danger');
+            this.classList.add('btn-dark', 'p-3');
+        });
+        deleteBtn.addEventListener('mouseout', function() {
+            this.innerHTML = '<i class="bi bi-trash"></i> Eliminar Sucursal';
+            this.classList.remove('btn-dark', 'p-3');
+            this.classList.add('btn-danger');
+        });
+    }
+});
+</script>
+{% endblock %}

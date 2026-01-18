@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ sucursal.nombre }} - Detalles{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'sucursales_lista' %}">Sucursales</a></li>
+<li class="breadcrumb-item active">{{ sucursal.nombre }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">{{ sucursal.nombre }}</h2>
+                <p class="text-muted mb-0">Código: {{ sucursal.codigo }}</p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'sucursales_lista' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                <a href="{% url 'sucursales_editar' sucursal.id %}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                <a href="{% url 'sucursales_configuracion' sucursal.id %}" class="btn btn-primary">
+                    <i class="bi bi-gear"></i> Configuración
+                </a>
+                <a href="{% url 'sucursales_reportes' sucursal.id %}" class="btn btn-info">
+                    <i class="bi bi-graph-up"></i> Reportes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estado y Acciones Rápidas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-{% if sucursal.activa %}success{% else %}danger{% endif %} fs-6">
+                            {% if sucursal.activa %}Sucursal Activa{% else %}Sucursal Inactiva{% endif %}
+                        </span>
+                        <span class="badge bg-{% if sucursal.permite_ventas %}success{% else %}secondary{% endif %} ms-2">
+                            Ventas {% if sucursal.permite_ventas %}✓{% else %}✗{% endif %}
+                        </span>
+                        <span class="badge bg-{% if sucursal.permite_compras %}success{% else %}secondary{% endif %} ms-2">
+                            Compras {% if sucursal.permite_compras %}✓{% else %}✗{% endif %}
+                        </span>
+                    </div>
+                    <div class="btn-group">
+                        <form method="post" action="{% url 'sucursales_toggle' sucursal.id %}" class="d-inline">
+                            {% csrf_token %}
+                            {% if sucursal.activa %}
+                            <button type="submit" name="accion" value="desactivar" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-power"></i> Desactivar
+                            </button>
+                            {% else %}
+                            <button type="submit" name="accion" value="activar" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-power"></i> Activar
+                            </button>
+                            {% endif %}
+                        </form>
+                        <form method="post" action="{% url 'sucursales_toggle' sucursal.id %}" class="d-inline ms-2">
+                            {% csrf_token %}
+                            <button type="submit" name="accion" value="toggle_ventas" 
+                                    class="btn btn-outline-{% if sucursal.permite_ventas %}warning{% else %}success{% endif %} btn-sm">
+                                <i class="bi bi-cart"></i> {% if sucursal.permite_ventas %}Deshabilitar{% else %}Habilitar{% endif %} Ventas
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'sucursales_toggle' sucursal.id %}" class="d-inline ms-2">
+                            {% csrf_token %}
+                            <button type="submit" name="accion" value="toggle_compras" 
+                                    class="btn btn-outline-{% if sucursal.permite_compras %}warning{% else %}success{% endif %} btn-sm">
+                                <i class="bi bi-basket"></i> {% if sucursal.permite_compras %}Deshabilitar{% else %}Habilitar{% endif %} Compras
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información Principal -->
+    <div class="col-lg-8">
+        <!-- Información Básica -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información de la Sucursal</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-3">
+                            <strong>Dirección:</strong><br>
+                            {{ sucursal.direccion }}<br>
+                            {{ sucursal.ciudad }}, {{ sucursal.estado }}<br>
+                            {{ sucursal.codigo_postal }}, {{ sucursal.pais }}
+                        </p>
+                        
+                        <p class="mb-3">
+                            <strong>Contacto:</strong><br>
+                            {% if sucursal.telefono %}{{ sucursal.telefono }}<br>{% endif %}
+                            {% if sucursal.email %}{{ sucursal.email }}<br>{% endif %}
+                            {% if sucursal.encargado %}Encargado: {{ sucursal.encargado }}{% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <p class="mb-3">
+                            <strong>Horario de Operación:</strong><br>
+                            {{ sucursal.horario_completo }}<br>
+                            {{ sucursal.dias_operacion }}
+                        </p>
+                        
+                        <p class="mb-3">
+                            <strong>Información Fiscal:</strong><br>
+                            {% if sucursal.rfc %}RFC: {{ sucursal.rfc }}{% else %}RFC no registrado{% endif %}
+                        </p>
+                        
+                        <p class="mb-0">
+                            <strong>Fecha de creación:</strong><br>
+                            {{ sucursal.fecha_creacion|date:"d/m/Y H:i" }}<br>
+                            <strong>Última actualización:</strong><br>
+                            {{ sucursal.fecha_actualizacion|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="mb-0">{{ usuarios_count }}</h3>
+                        <p class="text-muted mb-0">Usuarios</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="mb-0">{{ productos_count }}</h3>
+                        <p class="text-muted mb-0">Productos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h3 class="mb-0">{{ ventas_mes_count }}</h3>
+                        <p class="text-muted mb-0">Ventas (mes)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="mb-0">${{ total_ventas_mes|floatformat:2 }}</h5>
+                        <p class="text-muted mb-0">Total Ventas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Productos con Bajo Stock -->
+        {% if productos_bajo_stock %}
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Productos con Bajo Stock ({{ productos_bajo_stock.count }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Stock</th>
+                                <th class="text-center">Mínimo</th>
+                                <th class="text-center">Diferencia</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ps in productos_bajo_stock %}
+                            <tr>
+                                <td>
+                                    {{ ps.producto.codigo }}<br>
+                                    <small class="text-muted">{{ ps.producto.nombre|truncatechars:30 }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger">{{ ps.stock }}</span>
+                                </td>
+                                <td class="text-center">{{ ps.stock_minimo }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning">
+                                        -{{ ps.stock_minimo|add:"-1"|floatformat:"0" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'inventario_ajuste' %}?producto={{ ps.id }}" 
+                                       class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-plus-circle"></i> Reabastecer
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Panel Lateral -->
+    <div class="col-lg-4">
+        <!-- Estado de Caja -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Estado de Caja</h5>
+            </div>
+            <div class="card-body">
+                {% if caja_actual %}
+                <div class="alert alert-success">
+                    <i class="bi bi-unlock me-2"></i>
+                    <strong>Caja Abierta</strong><br>
+                    <small>
+                        Desde: {{ caja_actual.fecha_inicio|date:"d/m/Y H:i" }}<br>
+                        Por: {{ caja_actual.usuario.username }}
+                    </small>
+                </div>
+                <a href="{% url 'caja_principal' %}" class="btn btn-success w-100">
+                    <i class="bi bi-cash-stack"></i> Ir a Caja
+                </a>
+                {% else %}
+                <div class="alert alert-secondary">
+                    <i class="bi bi-lock me-2"></i>
+                    <strong>Caja Cerrada</strong>
+                </div>
+                <a href="{% url 'apertura_caja' %}" class="btn btn-primary w-100">
+                    <i class="bi bi-unlock"></i> Abrir Caja
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Valor del Inventario -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Valor del Inventario</h5>
+            </div>
+            <div class="card-body text-center">
+                <h2 class="text-success mb-0">${{ valor_inventario|floatformat:2 }}</h2>
+                <p class="text-muted mb-0">{{ productos_count }} productos</p>
+                <a href="{% url 'inventario_lista' %}" class="btn btn-outline-primary btn-sm mt-2">
+                    <i class="bi bi-clipboard-data"></i> Ver Inventario
+                </a>
+            </div>
+        </div>
+        
+        <!-- Transferencias Recientes -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Transferencias Recientes</h5>
+            </div>
+            <div class="card-body">
+                <h6>Salientes:</h6>
+                {% if transferencias_salida %}
+                <ul class="list-group list-group-flush mb-3">
+                    {% for transferencia in transferencias_salida %}
+                    <li class="list-group-item px-0 py-2">
+                        <small class="d-block">
+                            <strong>{{ transferencia.codigo }}</strong><br>
+                            A: {{ transferencia.sucursal_destino.nombre }}<br>
+                            <span class="badge bg-{{ transferencia.estado|yesno:'success,warning,secondary' }}">
+                                {{ transferencia.get_estado_display }}
+                            </span>
+                        </small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-3">No hay transferencias salientes</p>
+                {% endif %}
+                
+                <h6>Entrantes:</h6>
+                {% if transferencias_entrada %}
+                <ul class="list-group list-group-flush">
+                    {% for transferencia in transferencias_entrada %}
+                    <li class="list-group-item px-0 py-2">
+                        <small class="d-block">
+                            <strong>{{ transferencia.codigo }}</strong><br>
+                            De: {{ transferencia.sucursal_origen.nombre }}<br>
+                            <span class="badge bg-{{ transferencia.estado|yesno:'success,warning,secondary' }}">
+                                {{ transferencia.get_estado_display }}
+                            </span>
+                        </small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No hay transferencias entrantes</p>
+                {% endif %}
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'transferencias_lista' %}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-arrow-left-right"></i> Ver Todas
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Usuarios Activos -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Usuarios Asignados</h5>
+            </div>
+            <div class="card-body">
+                {% if usuarios %}
+                <div class="list-group list-group-flush">
+                    {% for usuario in usuarios %}
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-2">
+                                <span class="avatar-title bg-primary rounded-circle">
+                                    {{ usuario.username|first|upper }}
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ usuario.username }}</h6>
+                                <small class="text-muted">
+                                    {{ usuario.get_rol_display }}
+                                    {% if usuario.is_active %}
+                                    <span class="badge bg-success ms-2">Activo</span>
+                                    {% else %}
+                                    <span class="badge bg-danger ms-2">Inactivo</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No hay usuarios asignados a esta sucursal</p>
+                {% endif %}
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'usuarios_lista' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-people"></i> Gestionar Usuarios
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Acciones Rápidas para esta Sucursal</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 col-4 mb-3">
+                        <a href="{% url 'venta_nueva' %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-sm mx-auto mb-2">
+                                    <span class="avatar-title bg-success rounded-circle">
+                                        <i class="bi bi-cart-plus"></i>
+                                    </span>
+                                </div>
+                                <small>Nueva Venta</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 col-4 mb-3">
+                        <a href="{% url 'inventario_lista' %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-sm mx-auto mb-2">
+                                    <span class="avatar-title bg-primary rounded-circle">
+                                        <i class="bi bi-clipboard-data"></i>
+                                    </span>
+                                </div>
+                                <small>Inventario</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 col-4 mb-3">
+                        <a href="{% url 'caja_principal' %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-sm mx-auto mb-2">
+                                    <span class="avatar-title bg-warning rounded-circle">
+                                        <i class="bi bi-cash-stack"></i>
+                                    </span>
+                                </div>
+                                <small>Caja</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 col-4 mb-3">
+                        <a href="{% url 'transferencias_crear' %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-sm mx-auto mb-2">
+                                    <span class="avatar-title bg-info rounded-circle">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </span>
+                                </div>
+                                <small>Transferir</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 col-4 mb-3">
+                        <a href="{% url 'sucursales_reportes' sucursal.id %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-sm mx-auto mb-2">
+                                    <span class="avatar-title bg-danger rounded-circle">
+                                        <i class="bi bi-graph-up"></i>
+                                    </span>
+                                </div>
+                                <small>Reportes</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 col-4 mb-3">
+                        <a href="{% url 'sucursales_configuracion' sucursal.id %}" class="card text-center h-100 text-decoration-none">
+                            <div class="card-body">
+                                <div class="avatar-sm mx-auto mb-2">
+                                    <span class="avatar-title bg-dark rounded-circle">
+                                        <i class="bi bi-gear"></i>
+                                    </span>
+                                </div>
+                                <small>Configuración</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

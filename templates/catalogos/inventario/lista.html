@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario - Catálogos{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Inicio</a></li>
+<li class="breadcrumb-item"><a href="{% url 'productos_lista' %}">Catálogos</a></li>
+<li class="breadcrumb-item active">Inventario</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">Inventario - {{ sucursal.nombre }}</h2>
+                <p class="text-muted mb-0">Control de stock y productos</p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'inventario_ajuste' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-slash-minus"></i> Ajuste de Inventario
+                </a>
+                <a href="{% url 'inventario_movimientos' %}" class="btn btn-info">
+                    <i class="bi bi-clock-history"></i> Movimientos
+                </a>
+                <a href="{% url 'inventario_reporte' %}" class="btn btn-success">
+                    <i class="bi bi-file-earmark-text"></i> Reporte
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Total Productos</h6>
+                        <h3 class="mb-0">{{ total_productos }}</h3>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-primary rounded-circle">
+                            <i class="bi bi-box-seam"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Bajo Stock</h6>
+                        <h3 class="mb-0">{{ productos_bajo_stock }}</h3>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-danger rounded-circle">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Valor Inventario</h6>
+                        <h5 class="mb-0">${{ valor_inventario|floatformat:2 }}</h5>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-success rounded-circle">
+                            <i class="bi bi-currency-dollar"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-muted">Sucursal</h6>
+                        <h6 class="mb-0">{{ sucursal.nombre }}</h6>
+                    </div>
+                    <div class="avatar-sm">
+                        <span class="avatar-title bg-info rounded-circle">
+                            <i class="bi bi-shop"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-2">
+                    <div class="col-md-4">
+                        <input type="text" name="q" class="form-control" placeholder="Buscar producto..." value="{{ query }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select name="estado" class="form-select">
+                            <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos los productos</option>
+                            <option value="bajo" {% if estado == 'bajo' %}selected{% endif %}>Bajo stock (alerta)</option>
+                            <option value="normal" {% if estado == 'normal' %}selected{% endif %}>Stock normal</option>
+                            <option value="alto" {% if estado == 'alto' %}selected{% endif %}>Stock alto</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'inventario_lista' %}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-x-circle"></i> Limpiar
+                        </a>
+                    </div>
+                    <div class="col-md-1">
+                        <a href="#" class="btn btn-success w-100" title="Exportar">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Inventario -->
+<div class="card">
+    <div class="card-body">
+        {% if productos_sucursal %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-center">Mínimo</th>
+                        <th class="text-center">Máximo</th>
+                        <th class="text-end">Precio</th>
+                        <th class="text-end">Valor</th>
+                        <th class="text-center">Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ps in productos_sucursal %}
+                    {% with producto=ps.producto %}
+                    <tr>
+                        <td>{{ producto.codigo }}</td>
+                        <td>
+                            <strong>{{ producto.nombre }}</strong>
+                            {% if producto.descripcion %}
+                            <br><small class="text-muted">{{ producto.descripcion|truncatechars:50 }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ producto.categoria|default:"-" }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-{% if ps.estado_stock == 'bajo' %}danger{% elif ps.estado_stock == 'alto' %}warning{% else %}success{% endif %}">
+                                {{ ps.stock }}
+                            </span>
+                        </td>
+                        <td class="text-center">{{ ps.stock_minimo }}</td>
+                        <td class="text-center">{{ ps.stock_maximo }}</td>
+                        <td class="text-end">${{ ps.precio_venta|floatformat:2 }}</td>
+                        <td class="text-end">
+                            <strong>${% widthratio ps.stock 1 producto.costo_promedio as valor %}{{ valor|floatformat:2 }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if ps.activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'productos_detalle' producto.id %}" class="btn btn-info" title="Ver">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'inventario_ajuste' %}?producto={{ ps.id }}" class="btn btn-warning" title="Ajustar">
+                                    <i class="bi bi-sliders"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-light">
+                        <td colspan="7" class="text-end"><strong>Total Valor Inventario:</strong></td>
+                        <td class="text-end"><strong>${{ valor_inventario|floatformat:2 }}</strong></td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if productos_sucursal.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if productos_sucursal.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ productos_sucursal.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if estado != 'todos' %}&estado={{ estado }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in productos_sucursal.paginator.page_range %}
+                    {% if productos_sucursal.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > productos_sucursal.number|add:'-3' and num < productos_sucursal.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if estado != 'todos' %}&estado={{ estado }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if productos_sucursal.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ productos_sucursal.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if estado != 'todos' %}&estado={{ estado }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-clipboard-data text-muted" style="font-size: 3rem;"></i>
+            <h5 class="mt-3">No hay productos en el inventario</h5>
+            <p class="text-muted">Agrega productos para comenzar a gestionar el inventario</p>
+            <a href="{% url 'productos_crear' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Agregar Producto
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Alertas de Stock Bajo -->
+{% if productos_bajo_stock > 0 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Productos con Stock Bajo ({{ productos_bajo_stock }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Mínimo</th>
+                                <th>Diferencia</th>
+                                <th>Sugerencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ps in productos_sucursal %}
+                                {% if ps.estado_stock == 'bajo' %}
+                                <tr>
+                                    <td>{{ ps.producto.nombre }}</td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ ps.stock }}</span>
+                                    </td>
+                                    <td>{{ ps.stock_minimo }}</td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ ps.stock_minimo|add:"-1"|floatformat:"0" }}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">Reabastecer inmediatamente</small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

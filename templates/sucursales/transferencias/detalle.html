@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}  
+
+{% block title %}Transferencia TR-{{ transferencia.id|stringformat:"06d" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Transferencia TR-{{ transferencia.id|stringformat:"06d" }}</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'transferencias_lista' %}">Transferencias</a></li>
+        <li class="breadcrumb-item active">Detalle</li>
+    </ol>
+
+    <!-- Resumen de Transferencia -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-info-circle me-1"></i>
+            Información de la Transferencia
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Estado:</div>
+                        <div class="col-sm-8">
+                            <span class="badge {% if transferencia.estado == 'pendiente' %}bg-warning
+                                             {% elif transferencia.estado == 'en_proceso' %}bg-info
+                                             {% elif transferencia.estado == 'completada' %}bg-success
+                                             {% else %}bg-danger{% endif %}">
+                                {{ transferencia.get_estado_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Fecha Solicitud:</div>
+                        <div class="col-sm-8">{{ transferencia.fecha_solicitud|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Solicitado por:</div>
+                        <div class="col-sm-8">
+                            {% if transferencia.usuario_solicitud %}
+                            {{ transferencia.usuario_solicitud.get_full_name }}
+                            {% else %}
+                            Usuario no disponible
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Origen:</div>
+                        <div class="col-sm-8">
+                            <a href="{% url 'sucursales_detalle' transferencia.sucursal_origen.id %}">
+                                {{ transferencia.sucursal_origen.nombre }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Destino:</div>
+                        <div class="col-sm-8">
+                            <a href="{% url 'sucursales_detalle' transferencia.sucursal_destino.id %}">
+                                {{ transferencia.sucursal_destino.nombre }}
+                            </a>
+                        </div>
+                    </div>
+                    {% if transferencia.fecha_entrega %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold">Fecha Entrega:</div>
+                        <div class="col-sm-8">{{ transferencia.fecha_entrega|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if transferencia.observaciones %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white py-2">
+                            Observaciones
+                        </div>
+                        <div class="card-body py-3">
+                            {{ transferencia.observaciones|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Detalles de Productos -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-boxes me-1"></i>
+                Productos Transferidos
+            </div>
+            <div class="badge bg-primary rounded-pill">{{ detalles.count }} productos</div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Cantidad</th>
+                            <th>Costo Unitario</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for detalle in detalles %}
+                        <tr>
+                            <td>{{ detalle.producto.codigo }}</td>
+                            <td>{{ detalle.producto.nombre }}</td>
+                            <td>{{ detalle.producto.categoria.nombre }}</td>
+                            <td>{{ detalle.cantidad }}</td>
+                            <td>${{ detalle.costo_unitario|floatformat:2|intcomma }}</td>
+                            <td>${{ detalle.subtotal|floatformat:2|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No hay productos en esta transferencia</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <td colspan="5" class="text-end fw-bold">Total:</td>
+                            <td class="fw-bold">
+                                ${{ transferencia.total|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Estados -->
+    {% if transferencia.historial %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-history me-1"></i>
+            Historial de Estados
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                {% for evento in transferencia.historial %}
+                <div class="timeline-item mb-3">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h6 class="mb-1">{{ evento.estado }}</h6>
+                        <p class="mb-1 text-muted small">{{ evento.fecha|date:"d/m/Y H:i" }}</p>
+                        {% if evento.observaciones %}
+                        <p class="mb-0">{{ evento.observaciones }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Acciones -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-cogs me-1"></i>
+            Acciones
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <a href="{% url 'transferencias_lista' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Volver a Lista
+                    </a>
+                    <button class="btn btn-outline-info ms-2" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Imprimir
+                    </button>
+                </div>
+                <div>
+                    {% if transferencia.estado == 'pendiente' and request.user.is_superuser %}
+                    <button class="btn btn-warning me-2" onclick="procesarTransferencia({{ transferencia.id }})">
+                        <i class="fas fa-play me-1"></i> Procesar
+                    </button>
+                    {% endif %}
+                    {% if transferencia.estado == 'en_proceso' and request.user.sucursal.id == transferencia.sucursal_destino.id %}
+                    <button class="btn btn-success me-2" onclick="completarTransferencia({{ transferencia.id }})">
+                        <i class="fas fa-check me-1"></i> Completar Recepción
+                    </button>
+                    {% endif %}
+                    {% if transferencia.estado != 'completada' and transferencia.estado != 'cancelada' %}
+                    <button class="btn btn-danger" onclick="cancelarTransferencia({{ transferencia.id }})">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+}
+
+.timeline-content {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.timeline-item:last-child .timeline-content {
+    border-bottom: none;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function procesarTransferencia(id) {
+    if (confirm('¿Está seguro de que desea procesar esta transferencia?')) {
+        // Llamada AJAX para procesar
+        fetch(`/sucursales/transferencias/${id}/procesar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error al procesar la transferencia');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al procesar la transferencia');
+        });
+    }
+}
+
+function completarTransferencia(id) {
+    if (confirm('¿Confirmar recepción completa de todos los productos?')) {
+        // Llamada AJAX para completar
+        fetch(`/sucursales/transferencias/${id}/completar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error al completar la transferencia');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al completar la transferencia');
+        });
+    }
+}
+
+function cancelarTransferencia(id) {
+    const motivo = prompt('Ingrese el motivo de la cancelación:');
+    if (motivo !== null) {
+        // Llamada AJAX para cancelar
+        fetch(`/sucursales/transferencias/${id}/cancelar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ motivo: motivo })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error al cancelar la transferencia');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al cancelar la transferencia');
+        });
+    }
+}
+</script>
+{% endblock %}
