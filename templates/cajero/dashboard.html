@@ -1,0 +1,163 @@
+{% extends 'base_cajero.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Cajero{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card card-cajero">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard Cajero
+                    </h5>
+                    <span class="badge bg-primary">
+                        {{ request.user.sucursal.nombre }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Estadísticas -->
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-primary-cajero" style="height: 120px;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title">VENTAS HOY</h6>
+                                            <h2 class="mb-0">${{ total_hoy|floatformat:2 }}</h2>
+                                            <small>{{ cantidad_ventas_hoy }} ventas</small>
+                                        </div>
+                                        <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-success-cajero" style="height: 120px;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title">PRODUCTOS</h6>
+                                            <h2 class="mb-0">{{ productos_bajo_stock }}</h2>
+                                            <small>bajo stock</small>
+                                        </div>
+                                        <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-warning-cajero" style="height: 120px;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title">CAJA</h6>
+                                            {% if corte_activo %}
+                                            <h2 class="mb-0">ABIERTA</h2>
+                                            <small>desde {{ corte_activo.fecha_inicio|time }}</small>
+                                            {% else %}
+                                            <h2 class="mb-0">CERRADA</h2>
+                                            <small>abrir caja para ventas</small>
+                                            {% endif %}
+                                        </div>
+                                        <i class="fas fa-cash-register fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-info" style="height: 120px;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title">ACCIONES</h6>
+                                            {% if corte_activo %}
+                                            <a href="{% url 'cajero_nueva_venta' %}" class="btn btn-light btn-sm">
+                                                <i class="fas fa-plus me-1"></i> Nueva Venta
+                                            </a>
+                                            {% else %}
+                                            <a href="{% url 'cajero_apertura_caja' %}" class="btn btn-light btn-sm">
+                                                <i class="fas fa-lock-open me-1"></i> Abrir Caja
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                        <i class="fas fa-bolt fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Últimas ventas -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card card-cajero">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-history me-2"></i>Últimas Ventas
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-cajero">
+                                            <thead>
+                                                <tr>
+                                                    <th>Folio</th>
+                                                    <th>Cliente</th>
+                                                    <th>Total</th>
+                                                    <th>Forma Pago</th>
+                                                    <th>Hora</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for venta in ultimas_ventas %}
+                                                <tr>
+                                                    <td><strong>{{ venta.folio }}</strong></td>
+                                                    <td>
+                                                        {% if venta.cliente %}
+                                                        {{ venta.cliente.nombre_completo }}
+                                                        {% else %}
+                                                        Público general
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>${{ venta.total|floatformat:2 }}</td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">
+                                                            {{ venta.get_forma_pago_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ venta.fecha|time }}</td>
+                                                    <td>
+                                                        <a href="{% url 'cajero_detalle_venta' venta.id %}" 
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="{% url 'cajero_generar_ticket' venta.id %}" 
+                                                           class="btn btn-sm btn-outline-success">
+                                                            <i class="fas fa-print"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center">No hay ventas hoy</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

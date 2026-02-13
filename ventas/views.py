@@ -11,6 +11,8 @@ from decimal import Decimal, InvalidOperation
 import json
 from datetime import datetime, timedelta
 
+from usuarios.decorators import puede_eliminar_ventas
+
 from .models import Venta, DetalleVenta, CorteCaja
 from catalogos.models import ProductoSucursal, Cliente, MovimientoInventario
 from sucursales.models import Sucursal
@@ -689,6 +691,7 @@ def detalle_venta(request, pk):
     return render(request, 'ventas/detalle.html', context)
 
 @login_required
+@puede_eliminar_ventas
 def cancelar_venta(request, pk):
     """Cancelar una venta"""
     venta = get_object_or_404(Venta, pk=pk)

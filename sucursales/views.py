@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from catalogos import models
 from .models import Sucursal, ConfiguracionSucursal, TransferenciaInventario, DetalleTransferencia
-from usuarios.decorators import superadmin_required
+from usuarios.decorators import puede_gestionar_sucursales, puede_transferir_productos, superadmin_required
 from .forms import SucursalForm, ConfiguracionSucursalForm, TransferenciaForm
 from catalogos.models import ProductoSucursal
 from ventas.models import Venta, CorteCaja
@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 # =========== LISTA DE SUCURSALES ===========
 @login_required
-@superadmin_required
+@puede_gestionar_sucursales
 def sucursales_lista(request):
     query = request.GET.get('q', '')
     estado = request.GET.get('estado', 'todas')
@@ -85,7 +85,7 @@ def sucursales_lista(request):
 
 # =========== CREAR SUCURSAL ===========
 @login_required
-@superadmin_required
+@puede_gestionar_sucursales
 def sucursales_crear(request):
     if request.method == 'POST':
         form = SucursalForm(request.POST)
@@ -269,7 +269,7 @@ def sucursales_configuracion(request, pk):
 
 # =========== TRANSFERENCIAS ===========
 @login_required
-@superadmin_required
+@puede_transferir_productos
 def sucursales_transferencias_lista(request):
     estado = request.GET.get('estado', 'todas')
     sucursal_id = request.GET.get('sucursal', '')

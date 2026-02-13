@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Punto de Venta{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-gray: #ecf0f1;
+            --dark-gray: #7f8c8d;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .cajero-navbar {
+            background: linear-gradient(135deg, var(--primary-color), #1a2530);
+            color: white;
+            height: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .cajero-navbar .nav-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .cajero-navbar .nav-item {
+            margin: 0 5px;
+        }
+        
+        .cajero-navbar .nav-link {
+            color: rgba(255,255,255,0.9);
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .cajero-navbar .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .cajero-navbar .nav-link.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .main-container {
+            margin-top: 70px;
+            padding: 20px;
+            min-height: calc(100vh - 120px);
+        }
+        
+        .cajero-footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card-cajero {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .card-cajero:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-cajero .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-cajero {
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .btn-primary-cajero {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            color: white;
+        }
+        
+        .btn-primary-cajero:hover {
+            background: linear-gradient(135deg, #2980b9, var(--secondary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-success-cajero {
+            background: linear-gradient(135deg, var(--success-color), #219653);
+            color: white;
+        }
+        
+        .btn-warning-cajero {
+            background: linear-gradient(135deg, var(--warning-color), #e67e22);
+            color: white;
+        }
+        
+        .btn-danger-cajero {
+            background: linear-gradient(135deg, var(--danger-color), #c0392b);
+            color: white;
+        }
+        
+        .table-cajero {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .table-cajero thead {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background-color: rgba(39, 174, 96, 0.15);
+            color: var(--success-color);
+        }
+        
+        .status-inactive {
+            background-color: rgba(231, 76, 60, 0.15);
+            color: var(--danger-color);
+        }
+        
+        .status-pending {
+            background-color: rgba(243, 156, 18, 0.15);
+            color: var(--warning-color);
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            padding-right: 40px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding-left: 15px;
+        }
+        
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dark-gray);
+        }
+        
+        .modal-cajero .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .modal-cajero .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), #1a2530);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+        }
+        
+        .modal-cajero .modal-footer {
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .cajero-navbar .nav-link {
+                padding: 6px 10px;
+                font-size: 0.9rem;
+            }
+            
+            .main-container {
+                padding: 15px;
+                margin-top: 60px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar para cajero -->
+    <nav class="navbar navbar-expand-lg cajero-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand nav-brand" href="{% url 'cajero_dashboard' %}">
+                <i class="fas fa-cash-register me-2"></i>PUNTO DE VENTA
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCajero">
+                <span class="navbar-toggler-icon text-white">
+                    <i class="fas fa-bars"></i>
+                </span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarCajero">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'cajero_dashboard' %}active{% endif %}" 
+                           href="{% url 'cajero_dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'venta' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'cajero_nueva_venta' %}">
+                            <i class="fas fa-shopping-cart me-1"></i> Nueva Venta
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'productos' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'cajero_productos' %}">
+                            <i class="fas fa-boxes me-1"></i> Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'clientes' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'cajero_clientes' %}">
+                            <i class="fas fa-users me-1"></i> Clientes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'corte' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'cajero_cortes' %}">
+                            <i class="fas fa-calculator me-1"></i> Cortes
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-chart-bar me-1"></i> Reportes
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'cajero_reportes_ventas' %}">Ventas del día</a></li>
+                            <li><a class="dropdown-item" href="{% url 'cajero_reportes_productos' %}">Productos vendidos</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <div class="d-flex align-items-center">
+                    <span class="me-3">
+                        <i class="fas fa-store me-1"></i>
+                        <strong>{{ request.user.sucursal.nombre }}</strong>
+                    </span>
+                    <span class="me-3">
+                        <i class="fas fa-user me-1"></i>
+                        {{ request.user.username }}
+                    </span>
+                    <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-sign-out-alt me-1"></i> Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Contenido principal -->
+    <div class="main-container">
+        <!-- Mensajes flash -->
+        {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Footer -->
+    <footer class="cajero-footer">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-start">
+                    <small>Sesión: {{ request.user.username }}</small>
+                </div>
+                <div class="col-md-4 text-center">
+                    <small>
+                        <i class="fas fa-clock me-1"></i>
+                        <span id="live-clock">--:--:--</span>
+                    </small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <small>&copy; {% now "Y" %} Sistema Punto de Venta</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // Reloj en vivo
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-MX', {hour12: false});
+            document.getElementById('live-clock').textContent = timeString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // Auto-ocultar alertas después de 5 segundos
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 5000);
+            
+            // Validar formularios
+            $('form').on('submit', function() {
+                $(this).find('button[type="submit"]').prop('disabled', true).html(
+                    '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...'
+                );
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

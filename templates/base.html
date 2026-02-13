@@ -559,6 +559,21 @@
             box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
             border: 2px solid var(--bg-main);
         }
+        
+        /* ===============================
+           ROLE INDICATORS
+        ================================ */
+        .role-badge-superadmin {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+        
+        .role-badge-admin {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .role-badge-cajero {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -572,13 +587,15 @@
                     <i class="bi bi-shop text-gradient fs-4"></i>
                     <span class="text-gradient fw-bold">Agrofeed PV</span>
                 </h3>
-                <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">Sistema de Punto de Venta</small>
+                <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">
+                    {% if user.es_superadmin %}SuperAdmin{% elif user.es_admin %}Admin{% else %}Cajero{% endif %}
+                </small>
             </div>
 
             <!-- Navigation -->
             <nav class="nav-links">
                 {% if user.is_authenticated %}
-                    <!-- Dashboard -->
+                    <!-- Dashboard - Para todos -->
                     <div class="section-title">Principal</div>
                     <div class="nav-item">
                         <a class="nav-link {% if request.resolver_match.app_name == 'dashboard' or request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
@@ -588,16 +605,71 @@
                         </a>
                     </div>
 
-                    <!-- Ventas -->
-                    {% if user.rol == 'admin' or user.rol == 'superadmin' or user.rol == 'cajero' %}
-                        <div class="section-title">Ventas</div>
-                        <div class="nav-item">
-                            <a class="nav-link {% if 'venta_nueva' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'venta_nueva' %}">
-                                <i class="bi bi-cart-plus"></i>
-                                <span>Nueva Venta</span>
+                    <!-- =========== MENÚ PARA SUPERADMIN =========== -->
+                    {% if user.es_superadmin %}
+                        <div class="section-title">SuperAdmin</div>
+                        
+                        <!-- Sucursales -->
+                        <div class="nav-item has-submenu">
+                            <a class="nav-link {% if 'sucursales' in request.resolver_match.app_name %}active{% endif %}" 
+                               href="#" data-bs-toggle="collapse" data-bs-target="#submenu-sucursales">
+                                <i class="bi bi-shop-window"></i>
+                                <span>Sucursales</span>
+                                <i class="bi bi-chevron-right submenu-toggle ms-auto"></i>
                             </a>
+                            <div class="submenu collapse {% if 'sucursales' in request.resolver_match.app_name %}show{% endif %}" 
+                                 id="submenu-sucursales">
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'sucursales_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'sucursales_lista' %}">
+                                        <span>Ver Sucursales</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'sucursales_crear' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'sucursales_crear' %}">
+                                        <span>Agregar Sucursal</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'transferencias_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'sucursales_transferencias_lista' %}">
+                                        <span>Transferencias</span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Usuarios -->
+                        <div class="nav-item has-submenu">
+                            <a class="nav-link {% if 'usuarios' in request.resolver_match.app_name %}active{% endif %}" 
+                               href="#" data-bs-toggle="collapse" data-bs-target="#submenu-usuarios">
+                                <i class="bi bi-people"></i>
+                                <span>Usuarios</span>
+                                <i class="bi bi-chevron-right submenu-toggle ms-auto"></i>
+                            </a>
+                            <div class="submenu collapse {% if 'usuarios' in request.resolver_match.app_name %}show{% endif %}" 
+                                 id="submenu-usuarios">
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'usuarios_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'usuarios_lista' %}">
+                                        <span>Ver Usuarios</span>
+                                    </a>
+                                </div>
+                                <div class="nav-item">
+                                    <a class="nav-link {% if 'usuarios_crear' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'usuarios_crear' %}">
+                                        <span>Nuevo Usuario</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- =========== MENÚ PARA ADMIN (y SuperAdmin) =========== -->
+                    {% if user.es_admin or user.es_superadmin %}
+                        <!-- Ventas -->
+                        <div class="section-title">Ventas</div>
                         
                         <div class="nav-item">
                             <a class="nav-link {% if 'ventas_lista' in request.resolver_match.url_name %}active{% endif %}" 
@@ -606,69 +678,53 @@
                                 <span>Historial Ventas</span>
                             </a>
                         </div>
-                    {% endif %}
-
-                    <!-- Caja -->
-                    {% if user.rol == 'admin' or user.rol == 'superadmin' or user.rol == 'cajero' %}
-                        <div class="section-title">Caja</div>
+                        
                         <div class="nav-item">
-                            <a class="nav-link {% if 'caja_principal' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'caja_principal' %}">
+                            <a class="nav-link {% if 'reporte_ventas' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'reporte_ventas' %}">
+                                <i class="bi bi-bar-chart"></i>
+                                <span>Reportes de Ventas</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'cortes_caja_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'cortes_caja_lista' %}">
                                 <i class="bi bi-cash-stack"></i>
-                                <span>Caja Principal</span>
+                                <span>Cortes de Caja</span>
                             </a>
                         </div>
-                        
-                        <div class="nav-item">
-                            <a class="nav-link {% if 'apertura_caja' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'apertura_caja' %}">
-                                <i class="bi bi-unlock"></i>
-                                <span>Apertura</span>
-                            </a>
-                        </div>
-                        
-                        <div class="nav-item">
-                            <a class="nav-link {% if 'cierre_caja' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'cierre_caja' %}">
-                                <i class="bi bi-lock"></i>
-                                <span>Cierre</span>
-                            </a>
-                        </div>
-                        
-                        <div class="nav-item">
-                            <a class="nav-link {% if 'historial_cortes' in request.resolver_match.url_name or 'detalle_corte' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'historial_cortes' %}">
-                                <i class="bi bi-clock-history"></i>
-                                <span>Historial</span>
-                            </a>
-                        </div>
-                    {% endif %}
 
-                    <!-- Catálogos -->
-                    {% if user.rol == 'admin' or user.rol == 'superadmin' %}
+                        <!-- Catálogos -->
                         <div class="section-title">Catálogos</div>
                         
                         <div class="nav-item has-submenu">
-                            <a class="nav-link {% if 'catalogos' in request.resolver_match.app_name or 'productos' in request.resolver_match.url_name or 'categorias' in request.resolver_match.url_name or 'unidades' in request.resolver_match.url_name or 'proveedores' in request.resolver_match.url_name or 'inventario' in request.resolver_match.url_name %}active{% endif %}" 
+                            <a class="nav-link {% if 'catalogos' in request.resolver_match.app_name %}active{% endif %}" 
                                href="#" data-bs-toggle="collapse" data-bs-target="#submenu-catalogos">
                                 <i class="bi bi-box-seam"></i>
                                 <span>Catálogos</span>
                                 <i class="bi bi-chevron-right submenu-toggle ms-auto"></i>
                             </a>
-                            <div class="submenu collapse {% if 'catalogos' in request.resolver_match.app_name or 'productos' in request.resolver_match.url_name or 'categorias' in request.resolver_match.url_name or 'unidades' in request.resolver_match.url_name or 'proveedores' in request.resolver_match.url_name or 'inventario' in request.resolver_match.url_name %}show{% endif %}" 
+                            <div class="submenu collapse {% if 'catalogos' in request.resolver_match.app_name %}show{% endif %}" 
                                  id="submenu-catalogos">
+                                <!-- Productos -->
                                 <div class="nav-item">
                                     <a class="nav-link {% if 'productos_lista' in request.resolver_match.url_name %}active{% endif %}" 
                                        href="{% url 'productos_lista' %}">
-                                        <span>Productos</span>
+                                        <span>Productos (CRUD)</span>
                                     </a>
                                 </div>
+                                
+                                <!-- Solo SuperAdmin puede agregar dietas nuevas -->
+                                {% if user.es_superadmin %}
                                 <div class="nav-item">
-                                    <a class="nav-link {% if 'productos_crear' in request.resolver_match.url_name %}active{% endif %}" 
-                                       href="{% url 'productos_crear' %}">
-                                        <span>Nuevo Producto</span>
+                                    <a class="nav-link {% if 'dietas' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="#">
+                                        <span>Dietas</span>
                                     </a>
                                 </div>
+                                {% endif %}
+                                
                                 <div class="nav-item">
                                     <a class="nav-link {% if 'categorias_lista' in request.resolver_match.url_name %}active{% endif %}" 
                                        href="{% url 'categorias_lista' %}">
@@ -681,12 +737,6 @@
                                         <span>Unidades</span>
                                     </a>
                                 </div>
-                                <div class = "nav-item">
-                                    <a class ="nav-link {% if 'clientes_lista' in request.resolver_match.url_name %}active{% endif %}" 
-                                       href="{% url 'clientes_lista' %}">
-                                        <span>Clientes</span>
-                                    </a>
-                                </div>
                                 <div class="nav-item">
                                     <a class="nav-link {% if 'proveedores_lista' in request.resolver_match.url_name %}active{% endif %}" 
                                        href="{% url 'proveedores_lista' %}">
@@ -694,68 +744,94 @@
                                     </a>
                                 </div>
                                 <div class="nav-item">
-                                    <a class="nav-link {% if 'inventario_lista' in request.resolver_match.url_name %}active{% endif %}" 
-                                       href="{% url 'inventario_lista' %}">
-                                        <span>Inventario</span>
+                                    <a class="nav-link {% if 'clientes_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                                       href="{% url 'clientes_lista' %}">
+                                        <span>Clientes</span>
                                     </a>
                                 </div>
                             </div>
                         </div>
-                    {% endif %}
 
-                    <!-- Sucursales -->
-                    {% if user.rol == 'superadmin' or user.rol == 'admin' %}
-                        <div class="section-title">Sucursales</div>
-                        
+                        <!-- Caja -->
+                        <div class="section-title">Caja</div>
                         <div class="nav-item">
-                            <a class="nav-link {% if 'sucursales_lista' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'sucursales_lista' %}">
-                                <i class="bi bi-shop-window"></i>
-                                <span>Sucursales</span>
-                            </a>
-                        </div>
-                        
-                        {% if user.rol == 'superadmin' %}
-                        <div class="nav-item">
-                            <a class="nav-link {% if 'sucursales_crear' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'sucursales_crear' %}">
-                                <i class="bi bi-plus-circle"></i>
-                                <span>Nueva Sucursal</span>
-                            </a>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="nav-item">
-                            <a class="nav-link {% if 'transferencias_lista' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'transferencias_lista' %}">
-                                <i class="bi bi-arrow-left-right"></i>
-                                <span>Transferencias</span>
+                            <a class="nav-link {% if 'caja_principal' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'caja_principal' %}">
+                                <i class="bi bi-cash-stack"></i>
+                                <span>Ver Cortes</span>
                             </a>
                         </div>
                     {% endif %}
 
-                    <!-- Usuarios -->
-                    {% if user.rol == 'superadmin' %}
-                        <div class="section-title">Administración</div>
-                        
+                    <!-- =========== MENÚ PARA CAJEROS (y otros roles) =========== -->
+                    {% if user.es_cajero or user.es_admin or user.es_superadmin %}
+                        <!-- Ventas para cajeros -->
+                        <div class="section-title">Ventas</div>
                         <div class="nav-item">
-                            <a class="nav-link {% if 'usuarios_lista' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'usuarios_lista' %}">
-                                <i class="bi bi-people"></i>
-                                <span>Usuarios</span>
+                            <a class="nav-link {% if 'venta_nueva' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'venta_nueva' %}">
+                                <i class="bi bi-cart-plus"></i>
+                                <span>Nueva Venta</span>
+                            </a>
+                        </div>
+
+                        <!-- Caja para cajeros -->
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'apertura_caja' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'apertura_caja' %}">
+                                <i class="bi bi-unlock"></i>
+                                <span>Apertura Caja</span>
                             </a>
                         </div>
                         
                         <div class="nav-item">
-                            <a class="nav-link {% if 'usuarios_crear' in request.resolver_match.url_name %}active{% endif %}" 
-                               href="{% url 'usuarios_crear' %}">
-                                <i class="bi bi-person-plus"></i>
-                                <span>Nuevo Usuario</span>
+                            <a class="nav-link {% if 'cierre_caja' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'cierre_caja' %}">
+                                <i class="bi bi-lock"></i>
+                                <span>Cierre Caja</span>
+                            </a>
+                        </div>
+
+                        <!-- Inventario para cajeros -->
+                        <div class="section-title">Operaciones</div>
+                        <div class="nav-item">
+                            <a class="nav-link {% if 'inventario_lista' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'inventario_lista' %}">
+                                <i class="bi bi-clipboard-check"></i>
+                                <span>Inventario</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-ticket"></i>
+                                <span>Tickets</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-box-arrow-in-down"></i>
+                                <span>Entradas</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-basket"></i>
+                                <span>Pedidos</span>
+                            </a>
+                        </div>
+                        
+                        <div class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-egg-fried"></i>
+                                <span>Dietas</span>
                             </a>
                         </div>
                     {% endif %}
 
-                    <!-- Sistema -->
+                    <!-- =========== SISTEMA =========== -->
                     <div class="section-title">Sistema</div>
                     
                     <div class="nav-item">
@@ -775,13 +851,23 @@
             {% if user.is_authenticated %}
             <div class="mt-auto pt-3 border-top border-light border-opacity-10">
                 <div class="d-flex align-items-center">
-                    <div class="user-avatar me-3">
+                    <div class="user-avatar me-3
+                        {% if user.es_superadmin %}role-badge-superadmin
+                        {% elif user.es_admin %}role-badge-admin
+                        {% else %}role-badge-cajero{% endif %}">
                         {{ user.username|first|upper }}
                     </div>
                     <div class="flex-grow-1">
                         <div class="fw-semibold small">{{ user.get_full_name|default:user.username }}</div>
                         <div class="text-muted extra-small">
-                            <span class="badge-glass">{{ user.get_rol_display }}</span>
+                            <span class="badge-glass 
+                                {% if user.es_superadmin %}role-badge-superadmin
+                                {% elif user.es_admin %}role-badge-admin
+                                {% else %}role-badge-cajero{% endif %} text-white">
+                                {% if user.es_superadmin %}SuperAdmin
+                                {% elif user.es_admin %}Admin
+                                {% else %}Cajero{% endif %}
+                            </span>
                             {% if user.sucursal %}
                             <div class="mt-1">{{ user.sucursal.nombre|truncatechars:20 }}</div>
                             {% endif %}
@@ -822,6 +908,18 @@
                     <div class="text-center">
                         <div class="small text-muted">Caja</div>
                         <div class="fw-bold text-success" id="estadoCaja">Abierta</div>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <div class="small text-muted">Rol</div>
+                        <div class="fw-bold 
+                            {% if user.es_superadmin %}text-purple
+                            {% elif user.es_admin %}text-primary
+                            {% else %}text-success{% endif %}">
+                            {% if user.es_superadmin %}SuperAdmin
+                            {% elif user.es_admin %}Admin
+                            {% else %}Cajero{% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -864,12 +962,19 @@
                     <!-- User Dropdown -->
                     <div class="dropdown">
                         <a class="btn-glass p-2 d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown">
-                            <div class="user-avatar">
+                            <div class="user-avatar 
+                                {% if user.es_superadmin %}role-badge-superadmin
+                                {% elif user.es_admin %}role-badge-admin
+                                {% else %}role-badge-cajero{% endif %}">
                                 {{ user.username|first|upper }}
                             </div>
                             <div class="d-none d-md-block">
                                 <div class="small fw-semibold">{{ user.get_full_name|default:user.username }}</div>
-                                <div class="extra-small text-muted">{{ user.get_rol_display }}</div>
+                                <div class="extra-small text-muted">
+                                    {% if user.es_superadmin %}SuperAdmin
+                                    {% elif user.es_admin %}Admin
+                                    {% else %}Cajero{% endif %}
+                                </div>
                             </div>
                             <i class="bi bi-chevron-down"></i>
                         </a>
@@ -937,6 +1042,11 @@
                             <i class="bi bi-calendar"></i> {% now "d/m/Y" %} |
                             {% if user.is_authenticated %}
                             <i class="bi bi-person"></i> {{ user.username }}
+                            <span class="badge bg-secondary ms-2">
+                                {% if user.es_superadmin %}SuperAdmin
+                                {% elif user.es_admin %}Admin
+                                {% else %}Cajero{% endif %}
+                            </span>
                             {% else %}
                             <i class="bi bi-person-x"></i> No autenticado
                             {% endif %}
@@ -1002,6 +1112,9 @@
             
             // Restaurar modo oscuro
             restoreDarkMode();
+            
+            // Cargar estadísticas del dashboard
+            loadDashboardStats();
         });
 
         // Resaltar enlaces activos
@@ -1072,7 +1185,8 @@
         document.getElementById('btnBuscarGlobal')?.addEventListener('click', function() {
             const query = document.getElementById('globalSearch').value;
             if (query.trim()) {
-                alert(`Buscando: ${query}`);
+                // Buscar en productos, clientes, etc.
+                window.location.href = `{% url 'productos_lista' %}?q=${encodeURIComponent(query)}`;
             }
         });
 
@@ -1094,6 +1208,18 @@
             document.getElementById('sidebarToggle').addEventListener('click', function() {
                 sidebar.classList.toggle('sidebar-show');
             });
+        }
+
+        // Cargar estadísticas del dashboard
+        function loadDashboardStats() {
+            fetch('/get-ventas-dia/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('ventasHoy').textContent = `$${data.total_hoy.toFixed(2)}`;
+                    }
+                })
+                .catch(error => console.error('Error loading stats:', error));
         }
     </script>
     {% block extra_js %}{% endblock %}

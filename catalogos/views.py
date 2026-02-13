@@ -31,7 +31,7 @@ from .forms import (
 )
 
 from sucursales.models import Sucursal
-from usuarios.decorators import admin_required, superadmin_required
+from usuarios.decorators import admin_required, puede_editar_precios, superadmin_required
 
 # =========== PROVEEDORES ===========
 @login_required
@@ -451,7 +451,7 @@ def productos_crear(request):
 
 
 @login_required
-@admin_required
+@puede_editar_precios
 def productos_editar(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     
@@ -546,7 +546,7 @@ def productos_detalle(request, pk):
 
 
 @login_required
-@superadmin_required
+@puede_editar_precios
 def productos_precios(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     productos_sucursal = ProductoSucursal.objects.filter(
@@ -931,51 +931,23 @@ def clientes_crear(request):
 
 @login_required
 def clientes_editar(request, pk):
-    """Editar cliente existente"""
     cliente = get_object_or_404(Cliente, pk=pk)
     
     if request.method == 'POST':
         form = ClienteForm(request.POST, instance=cliente, request=request)
         if form.is_valid():
-            # Guardar valores anteriores para el historial
-            tipo_cliente_anterior = cliente.tipo_cliente
-            porcentaje_anterior = cliente.porcentaje_descuento
+            # Solo admin/superadmin pueden cambiar descuentos
+            if not (request.user.es_admin or request.user.es_superadmin):
+                # Revertir cambios de descuento si no es admin
+                cliente_data = form.cleaned_data
+                if (cliente_data.get('tipo_cliente') != cliente.tipo_cliente or 
+                    cliente_data.get('porcentaje_descuento') != cliente.porcentaje_descuento):
+                    messages.error(request, 'Solo administradores pueden modificar descuentos')
+                    return redirect('clientes_lista')
             
             cliente = form.save()
-            
-            # Si cambió el descuento, registrar en historial
-            if (cliente.tipo_cliente != tipo_cliente_anterior or 
-                cliente.porcentaje_descuento != porcentaje_anterior):
-                
-                # Solo admin/superadmin pueden cambiar descuento
-                if request.user.es_admin or request.user.es_superadmin:
-                    HistorialDescuento.objects.create(
-                        cliente=cliente,
-                        tipo_cliente_anterior=tipo_cliente_anterior,
-                        tipo_cliente_nuevo=cliente.tipo_cliente,
-                        porcentaje_anterior=porcentaje_anterior,
-                        porcentaje_nuevo=cliente.porcentaje_descuento,
-                        usuario=request.user,
-                        motivo='Actualización manual'
-                    )
-                else:
-                    # Revertir cambios si no es admin
-                    cliente.tipo_cliente = tipo_cliente_anterior
-                    cliente.porcentaje_descuento = porcentaje_anterior
-                    cliente.save()
-            
             messages.success(request, 'Cliente actualizado exitosamente')
             return redirect('clientes_lista')
-    else:
-        form = ClienteForm(instance=cliente, request=request)
-    
-    return render(request, 'catalogos/clientes/form.html', {
-        'form': form,
-        'titulo': 'Editar Cliente',
-        'accion': 'Actualizar',
-        'cliente': cliente,
-        'puede_editar_descuento': request.user.es_admin or request.user.es_superadmin
-    })
 
 
 @login_required

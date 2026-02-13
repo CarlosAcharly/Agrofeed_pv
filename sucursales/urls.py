@@ -1,3 +1,4 @@
+# sucursales/urls.py
 from django.urls import path
 from . import views
 
@@ -13,9 +14,9 @@ urlpatterns = [
     path('toggle/<int:pk>/', views.sucursales_toggle, name='sucursales_toggle'),
     
     # =========== TRANSFERENCIAS ===========
-    path('transferencias/', views.sucursales_transferencias_lista, name='transferencias_lista'),
-    path('transferencias/crear/', views.sucursales_transferencias_crear, name='transferencias_crear'),
-    path('transferencias/<int:pk>/', views.sucursales_transferencias_detalle, name='transferencias_detalle'),
+    path('transferencias/', views.sucursales_transferencias_lista, name='sucursales_transferencias_lista'),
+    path('transferencias/crear/', views.sucursales_transferencias_crear, name='sucursales_transferencias_crear'),
+    path('transferencias/<int:pk>/', views.sucursales_transferencias_detalle, name='sucursales_transferencias_detalle'),
     
     # =========== API ===========
     path('api/estadisticas/', views.sucursales_estadisticas_api, name='sucursales_estadisticas_api'),

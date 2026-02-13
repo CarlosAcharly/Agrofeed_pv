@@ -12,6 +12,7 @@ urlpatterns = [
     path('catalogos/', include('catalogos.urls')),
     path('ventas/', include('ventas.urls')),
     path('caja/', include('caja.urls')),
+    path('cajero/', include('cajero.urls')),
     path(
         'login/',
         auth_views.LoginView.as_view(

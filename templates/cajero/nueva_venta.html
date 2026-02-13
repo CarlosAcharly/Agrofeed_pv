@@ -1,0 +1,637 @@
+{% extends 'base_cajero.html' %}
+{% load static %}
+
+{% block title %}Nueva Venta{% endblock %}
+
+{% block extra_css %}
+<style>
+    .venta-container {
+        display: flex;
+        gap: 20px;
+        min-height: calc(100vh - 200px);
+    }
+    
+    .productos-section {
+        flex: 3;
+    }
+    
+    .carrito-section {
+        flex: 2;
+        min-width: 350px;
+    }
+    
+    .producto-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    
+    .producto-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .producto-card.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .carrito-item {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+    }
+    
+    .cantidad-control {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .cantidad-input {
+        width: 60px;
+        text-align: center;
+    }
+    
+    .totales-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>
+                    <i class="fas fa-shopping-cart me-2"></i>Nueva Venta
+                </h3>
+                <div>
+                    {% if corte_activo %}
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>Caja Abierta
+                    </span>
+                    {% else %}
+                    <span class="badge bg-danger">
+                        <i class="fas fa-times-circle me-1"></i>Caja Cerrada
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="venta-container">
+        <!-- Sección de productos -->
+        <div class="productos-section">
+            <!-- Barra de búsqueda -->
+            <div class="card card-cajero mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="search-box">
+                                <input type="text" id="search-producto" class="form-control" 
+                                       placeholder="Buscar producto...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="filter-categoria" class="form-control">
+                                <option value="">Todas las categorías</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria }}">{{ categoria }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lista de productos -->
+            <div class="card card-cajero">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes me-2"></i>Productos Disponibles
+                        <small class="text-muted ms-2">{{ productos|length }} productos</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="productos-grid">
+                        {% for producto in productos %}
+                        <div class="col-md-3 col-sm-4 col-6 mb-3 producto-item" 
+                             data-categoria="{{ producto.producto.categoria.nombre|default:'Sin categoría' }}"
+                             data-nombre="{{ producto.producto.nombre|lower }}">
+                            <div class="producto-card {% if producto.stock <= 0 %}disabled{% endif %}" 
+                                 data-id="{{ producto.id }}"
+                                 data-nombre="{{ producto.producto.nombre }}"
+                                 data-precio="{{ producto.precio_venta }}"
+                                 data-stock="{{ producto.stock }}"
+                                 data-codigo="{{ producto.producto.codigo }}">
+                                <div class="text-center mb-2">
+                                    {% if producto.producto.imagen %}
+                                    <img src="{{ producto.producto.imagen.url }}" 
+                                         alt="{{ producto.producto.nombre }}"
+                                         style="height: 80px; object-fit: contain;">
+                                    {% else %}
+                                    <div style="height: 80px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 5px;">
+                                        <i class="fas fa-box fa-2x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <h6 class="mb-1">{{ producto.producto.nombre }}</h6>
+                                <p class="text-muted mb-1 small">{{ producto.producto.codigo }}</p>
+                                <p class="fw-bold mb-1">${{ producto.precio_venta|floatformat:2 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge {% if producto.stock > 10 %}bg-success{% elif producto.stock > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        Stock: {{ producto.stock|floatformat:2 }}
+                                    </span>
+                                    {% if producto.stock > 0 %}
+                                    <button class="btn btn-sm btn-primary btn-agregar" data-id="{{ producto.id }}">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No hay productos disponibles</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección del carrito -->
+        <div class="carrito-section">
+            <div class="card card-cajero sticky-top" style="top: 90px;">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shopping-basket me-2"></i>Carrito de Compra
+                        </h5>
+                        <button id="limpiar-carrito" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    <div id="carrito-items">
+                        {% include 'cajero/partials/carrito_items.html' %}
+                    </div>
+                </div>
+                
+                <!-- Totales -->
+                <div class="totales-section">
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <strong>Subtotal:</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <span id="subtotal">${{ subtotal|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if cliente and cliente.porcentaje_descuento > 0 %}
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <strong>Descuento ({{ cliente.porcentaje_descuento }}%):</strong>
+                        </div>
+                        <div class="col-6 text-end text-danger">
+                            <span id="descuento">-${{ descuento_total|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <h5 class="mb-0">Total:</h5>
+                        </div>
+                        <div class="col-6 text-end">
+                            <h4 class="mb-0 text-primary" id="total">${{ total|floatformat:2 }}</h4>
+                        </div>
+                    </div>
+                    
+                    <!-- Cliente -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Cliente:</strong></label>
+                        <div id="cliente-info">
+                            {% if cliente %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ cliente.nombre_completo }}</strong><br>
+                                    <small class="text-muted">{{ cliente.codigo }} | {{ cliente.telefono }}</small>
+                                </div>
+                                <button id="cambiar-cliente" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                            </div>
+                            {% else %}
+                            <button id="seleccionar-cliente" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-user-plus me-1"></i> Seleccionar Cliente
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Forma de pago -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Forma de Pago:</strong></label>
+                        <select id="forma-pago" class="form-select">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="mixto">Mixto</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Efectivo recibido -->
+                    <div class="mb-3" id="efectivo-group" style="display: none;">
+                        <label class="form-label"><strong>Efectivo Recibido:</strong></label>
+                        <input type="number" id="efectivo-recibido" class="form-control" 
+                               step="0.01" min="0" value="{{ total|floatformat:2 }}">
+                        <div class="mt-2">
+                            <strong>Cambio:</strong> 
+                            <span id="cambio" class="text-success">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Observaciones -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Observaciones:</strong></label>
+                        <textarea id="observaciones" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <!-- Botón de procesar -->
+                    <button id="procesar-venta" class="btn btn-success-cajero btn-lg w-100 py-3">
+                        <i class="fas fa-check-circle me-2"></i>PROCESAR VENTA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar cliente -->
+<div class="modal fade modal-cajero" id="clienteModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users me-2"></i>Seleccionar Cliente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="buscar-cliente-modal" class="form-control" 
+                           placeholder="Buscar cliente por nombre o código...">
+                </div>
+                <div id="clientes-list" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Lista de clientes cargada por AJAX -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="nuevo-cliente-btn">
+                    <i class="fas fa-plus me-1"></i> Nuevo Cliente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Variables globales
+    let carrito = {{ carrito|safe|default:'[]' }};
+    let cliente = {% if cliente %}{
+        id: {{ cliente.id }},
+        nombre: "{{ cliente.nombre_completo }}",
+        codigo: "{{ cliente.codigo }}",
+        telefono: "{{ cliente.telefono|default:'' }}",
+        descuento: {{ cliente.porcentaje_descuento|floatformat:2 }}
+    }{% else %}null{% endif %};
+    
+    // Función para actualizar el carrito en pantalla
+    function actualizarCarrito() {
+        $.ajax({
+            url: '{% url "cajero_nueva_venta" %}',
+            method: 'GET',
+            success: function(data) {
+                // Aquí actualizarías solo la sección del carrito
+                $('#carrito-items').html($(data).find('#carrito-items').html());
+                actualizarTotales();
+            }
+        });
+    }
+    
+    // Función para actualizar totales
+    function actualizarTotales() {
+        let subtotal = 0;
+        $.each(carrito, function(i, item) {
+            subtotal += parseFloat(item.precio) * parseFloat(item.cantidad);
+        });
+        
+        let descuento = 0;
+        if (cliente && cliente.descuento > 0) {
+            descuento = subtotal * (cliente.descuento / 100);
+        }
+        
+        let total = subtotal - descuento;
+        
+        $('#subtotal').text('$' + subtotal.toFixed(2));
+        $('#descuento').text('-$' + descuento.toFixed(2));
+        $('#total').text('$' + total.toFixed(2));
+        
+        // Si hay efectivo recibido, calcular cambio
+        let efectivo = parseFloat($('#efectivo-recibido').val()) || 0;
+        if (efectivo > 0) {
+            $('#cambio').text('$' + (efectivo - total).toFixed(2));
+        }
+    }
+    
+    // Agregar producto al carrito
+    $('.btn-agregar').click(function() {
+        let productoId = $(this).data('id');
+        let productoDiv = $(this).closest('.producto-card');
+        
+        $.ajax({
+            url: '{% url "ajax_agregar_carrito" %}',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({
+                producto_id: productoId,
+                cantidad: 1
+            }),
+            success: function(response) {
+                if (response.success) {
+                    carrito = response.carrito;
+                    actualizarCarrito();
+                    // Mostrar notificación
+                    showToast('Producto agregado al carrito', 'success');
+                } else {
+                    showToast(response.error, 'error');
+                }
+            }
+        });
+    });
+    
+    // Quitar producto del carrito
+    $(document).on('click', '.btn-quitar', function() {
+        let itemId = $(this).data('id');
+        
+        $.ajax({
+            url: '{% url "ajax_remover_carrito" %}',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({
+                item_id: itemId
+            }),
+            success: function(response) {
+                if (response.success) {
+                    carrito = response.carrito;
+                    actualizarCarrito();
+                    showToast('Producto removido', 'warning');
+                }
+            }
+        });
+    });
+    
+    // Actualizar cantidad
+    $(document).on('change', '.cantidad-input', function() {
+        let itemId = $(this).data('id');
+        let cantidad = $(this).val();
+        
+        // Aquí implementarías la actualización por AJAX
+    });
+    
+    // Seleccionar cliente
+    $('#seleccionar-cliente, #cambiar-cliente').click(function() {
+        $('#clienteModal').modal('show');
+        buscarClientes();
+    });
+    
+    // Buscar clientes
+    $('#buscar-cliente-modal').keyup(function() {
+        buscarClientes($(this).val());
+    });
+    
+    function buscarClientes(query = '') {
+        $.ajax({
+            url: '{% url "cajero_buscar_clientes" %}',
+            method: 'GET',
+            data: { q: query },
+            success: function(response) {
+                let html = '';
+                $.each(response.clientes, function(i, cliente) {
+                    html += `
+                    <div class="card mb-2 cliente-item" data-id="${cliente.id}" 
+                         data-nombre="${cliente.nombre}" 
+                         data-codigo="${cliente.codigo}"
+                         data-telefono="${cliente.telefono}"
+                         data-descuento="${cliente.descuento}"
+                         style="cursor: pointer;">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${cliente.nombre}</h6>
+                                    <p class="text-muted mb-0 small">
+                                        ${cliente.codigo} | ${cliente.telefono || 'Sin teléfono'}
+                                    </p>
+                                </div>
+                                ${cliente.descuento > 0 ? 
+                                `<span class="badge bg-success">${cliente.descuento}% desc.</span>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                $('#clientes-list').html(html);
+            }
+        });
+    }
+    
+    // Seleccionar cliente desde modal
+    $(document).on('click', '.cliente-item', function() {
+        cliente = {
+            id: $(this).data('id'),
+            nombre: $(this).data('nombre'),
+            codigo: $(this).data('codigo'),
+            telefono: $(this).data('telefono'),
+            descuento: $(this).data('descuento')
+        };
+        
+        $.ajax({
+            url: '{% url "ajax_seleccionar_cliente" %}',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({
+                cliente_id: cliente.id
+            }),
+            success: function(response) {
+                if (response.success) {
+                    $('#cliente-info').html(`
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${cliente.nombre}</strong><br>
+                                <small class="text-muted">${cliente.codigo} | ${cliente.telefono || ''}</small>
+                            </div>
+                            <button id="cambiar-cliente" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                        </div>
+                    `);
+                    $('#clienteModal').modal('hide');
+                    actualizarTotales();
+                    showToast('Cliente seleccionado', 'success');
+                }
+            }
+        });
+    });
+    
+    // Filtrar productos
+    $('#search-producto').keyup(function() {
+        let search = $(this).val().toLowerCase();
+        $('.producto-item').each(function() {
+            let nombre = $(this).data('nombre');
+            let categoria = $(this).data('categoria').toLowerCase();
+            
+            if (nombre.includes(search) || categoria.includes(search)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    $('#filter-categoria').change(function() {
+        let categoria = $(this).val().toLowerCase();
+        $('.producto-item').each(function() {
+            let itemCategoria = $(this).data('categoria').toLowerCase();
+            
+            if (categoria === '' || itemCategoria === categoria) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Mostrar/ocultar efectivo recibido
+    $('#forma-pago').change(function() {
+        if ($(this).val() === 'efectivo' || $(this).val() === 'mixto') {
+            $('#efectivo-group').show();
+            calcularCambio();
+        } else {
+            $('#efectivo-group').hide();
+        }
+    });
+    
+    // Calcular cambio
+    $('#efectivo-recibido').keyup(calcularCambio);
+    
+    function calcularCambio() {
+        let efectivo = parseFloat($('#efectivo-recibido').val()) || 0;
+        let total = parseFloat($('#total').text().replace('$', '')) || 0;
+        let cambio = efectivo - total;
+        
+        if (cambio >= 0) {
+            $('#cambio').text('$' + cambio.toFixed(2)).removeClass('text-danger').addClass('text-success');
+        } else {
+            $('#cambio').text('$' + Math.abs(cambio).toFixed(2) + ' (faltante)').removeClass('text-success').addClass('text-danger');
+        }
+    }
+    
+    // Procesar venta
+    $('#procesar-venta').click(function() {
+        if (carrito.length === 0) {
+            showToast('El carrito está vacío', 'error');
+            return;
+        }
+        
+        if (!confirm('¿Confirmar venta?')) return;
+        
+        $(this).prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...'
+        );
+        
+        let formaPago = $('#forma-pago').val();
+        let efectivoRecibido = formaPago === 'efectivo' || formaPago === 'mixto' ? 
+            parseFloat($('#efectivo-recibido').val()) : 0;
+        let observaciones = $('#observaciones').val();
+        
+        $.ajax({
+            url: '{% url "cajero_procesar_venta" %}',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({
+                forma_pago: formaPago,
+                efectivo_recibido: efectivoRecibido,
+                observaciones: observaciones
+            }),
+            success: function(response) {
+                if (response.success) {
+                    showToast(`Venta ${response.folio} procesada exitosamente`, 'success');
+                    
+                    // Mostrar ticket o redirigir
+                    setTimeout(function() {
+                        window.location.href = `/cajero/venta/${response.venta_id}/ticket/`;
+                    }, 1500);
+                } else {
+                    $('#procesar-venta').prop('disabled', false).html(
+                        '<i class="fas fa-check-circle me-2"></i>PROCESAR VENTA'
+                    );
+                    showToast(response.error, 'error');
+                }
+            }
+        });
+    });
+    
+    // Limpiar carrito
+    $('#limpiar-carrito').click(function() {
+        if (!confirm('¿Limpiar todo el carrito?')) return;
+        
+        $.ajax({
+            url: '{% url "cajero_limpiar_carrito" %}',
+            method: 'GET',
+            success: function() {
+                carrito = [];
+                actualizarCarrito();
+                showToast('Carrito limpiado', 'warning');
+            }
+        });
+    });
+    
+    // Función para mostrar notificaciones
+    function showToast(message, type = 'info') {
+        // Implementar toast simple
+        alert(message);
+    }
+    
+    // Inicializar
+    actualizarTotales();
+});
+</script>
+{% endblock %}
